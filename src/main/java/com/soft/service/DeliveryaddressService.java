@@ -2,15 +2,12 @@ package com.soft.service;
 
 import com.soft.entity.Deliveryaddress;
 import com.baomidou.mybatisplus.extension.service.IService;
+import java.util.List;
 
-/**
- * <p>
- *  服务类
- * </p>
- *
- * @author Byterain
- * @since 2025-06-22
- */
 public interface DeliveryaddressService extends IService<Deliveryaddress> {
-
+    // 获取用户的所有地址
+    List<Deliveryaddress> getAddressByAccountId(String accountId);
+    
+    // 获取用户的默认地址
+    Deliveryaddress getDefaultAddress(String accountId);
 }
