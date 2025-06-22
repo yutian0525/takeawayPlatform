@@ -1,0 +1,267 @@
+<template>
+  <div class="wrapper">
+    <!-- header部分 -->
+    <header>
+      <p>确认订单</p>
+    </header>
+
+    <!-- 配送地址部分 -->
+    <div class="order-info">
+      <h5>订单配送至：</h5>
+      <div class="order-info-address" @click="toAddress()">
+        <p>{{ deliveryAddress!=null?deliveryAddress.address:'请选择配送地址' }}</p>
+         <!-- <p>上海市静安区静安寺街道常德路195号</p> -->
+        <i class="el-icon-arrow-right"></i>
+      </div>
+      <p v-if="deliveryAddress!=null">  
+          {{deliveryAddress.contactName }}
+          {{deliveryAddress.contactSex | fmtSex}} 
+          <em>{{deliveryAddress.contactTel}}</em>
+      </p> 
+    </div>
+
+
+    <h3>{{ business.businessName }}</h3>
+    <!-- 订单明细部分 -->
+    <ul class="order-detailed">
+      <li v-for="item in cart" :key="item.goodsId">
+        <div class="order-detailed-left">
+          <img :src="item.goodsImg">
+          <p>{{ item.goodsName }} x {{ item.quantity }}</p>
+        </div>
+        <p>&#165; {{ item.goodsPrice * item.quantity }}</p>
+      </li>
+    </ul>
+    <div class="order-deliveryfee">
+      <p>配送费</p>
+      <p>&#165; {{ business.deliveryPrice }}</p>
+    </div>
+
+    <!-- 合计部分 -->
+    <div class="total">
+      <div class="total-left">总价：
+        &#165; {{ totalPrice }}
+      </div>
+      <div class="total-right" @click="toPayment">
+        去支付
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+  import {ref, reactive, onMounted, computed} from "vue"
+import {useRouter, useRoute} from "vue-router"
+
+  const router = useRouter();
+const route = useRoute();
+
+const business = ref({});
+const cart = ref([]);
+const deliveryAddress = ref({
+    contactName:'王思聪',
+    contactSex:1,
+    contactTel:'18845678989'
+  });
+
+const totalPrice = computed(() => {
+    let total = 0;
+    for (const item of cart.value) {
+        total += item.goodsPrice * item.quantity;
+    }
+    total += business.value.deliveryPrice;
+    return total;
+});
+
+const toPayment = () => {
+    router.push('/payment');
+};
+
+onMounted(() => {
+    cart.value = JSON.parse(sessionStorage.getItem('cart')) || [];
+    business.value = JSON.parse(sessionStorage.getItem('business')) || {};
+});
+</script>
+
+<style scoped>
+  /****************** 总容器 ******************/
+  .wrapper {
+    width: 100%;
+    height: 100%;
+    padding: 2vw;
+    box-sizing: border-box;
+
+    padding-bottom:16vw;
+  }
+
+  /****************** header部分 ******************/
+  .wrapper header {
+    width: 100%;
+    height: 12vw;
+    background:linear-gradient(to right,#fff1eb,#ace0f9 ); color:#596164;
+    font-size: 4.8vw;
+    letter-spacing:2vw;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /****************** 订单信息部分 ******************/
+  .wrapper .order-info {
+    /*注意这里，不设置高，靠内容撑开。因为地址有可能折行*/
+    width: 95%;
+    margin:16vw auto 10vw auto;
+    
+    background:linear-gradient(to right bottom,#d8edfd,#f6faff);
+    box-sizing: border-box;
+    color: #436283;
+    border-radius:2vw;
+    padding: 4vw;
+    margin-bottom: 5vw;
+    padding: 4vw;
+    box-sizing: border-box;
+    box-shadow: 0.5vw 0.5vw 3vw rgba(0, 0, 0, 0.1);
+  }
+
+  .wrapper .order-info h5 {
+    font-size: 3.6vw;
+    font-weight: 600;
+    color:#001747;
+    margin-bottom:4vw;
+  }
+
+  .wrapper .order-info .order-info-address {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    font-weight: 500;
+    user-select: none;
+    cursor: pointer;
+    margin: 1vw 0;
+    
+  }
+
+  .wrapper .order-info .order-info-address p {
+    width: 90%;
+    font-size: 4vw;
+    text-align: left;
+  }
+
+  .wrapper .order-info .order-info-address i {
+    font-size: 5vw;
+  }
+
+  .wrapper .order-info p {
+    font-size: 3.5vw;
+    margin-top: 2vw;
+    text-align: right;
+  }
+
+  .wrapper h3 {
+    box-sizing: border-box;
+    padding: 3vw;
+    font-size: 4vw;
+    color: #66717d;
+    border-bottom: solid 1px #ddd;
+  }
+
+  /****************** 订单明细部分 ******************/
+  .wrapper .order-detailed {
+    width: 100%;
+  }
+
+  .wrapper .order-detailed li {
+    width: 100%;
+    height: 16vw;
+    box-sizing: border-box;
+    padding: 10vw 3vw;
+    color: #666;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .wrapper .order-detailed li .order-detailed-left {
+    display: flex;
+    align-items: center;
+  }
+
+  .wrapper .order-detailed li .order-detailed-left img {
+    width: 16vw;
+    height: 16vw;
+    border-radius: 2vw;
+  }
+
+  .wrapper .order-detailed li .order-detailed-left p {
+    font-size: 3.5vw;
+    margin-left: 3vw;
+    color: #393939;
+  }
+
+  .wrapper .order-detailed li p {
+    font-size: 3.5vw;
+    color: #df5643;
+    font-weight: 700;
+  }
+
+  .wrapper .order-deliveryfee {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 2vw 3vw;
+    color: #466457;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 3.8vw;
+    background-color:#e5e7da;
+    border-radius: 0.5vw;
+    margin-top: 4vw;
+  }
+
+  /****************** 订单合计部分 ******************/
+  .wrapper .total {
+    width: 100%;
+    height: 14vw;
+
+    position: fixed;
+    left: 0;
+    bottom: 0;
+
+    display: flex;
+  }
+
+  .wrapper .total .total-left {
+    flex: 2;
+    background-color: #66717d;
+    color: #fff;
+    font-size: 4.5vw;
+    font-weight: 700;
+    user-select: none;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .wrapper .total .total-right {
+    flex: 1;
+    background-color: #ff812c;
+    color: #fff;
+    font-size: 4.5vw;
+    font-weight: 700;
+    user-select: none;
+    cursor: pointer;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+</style>

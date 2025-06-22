@@ -39,13 +39,13 @@
                     <div class="food-right">
                         <!-- disabled 标签失败（不可用）-->
                         <div class="quantity-control">
-                            <el-button>
-                                <minus />-
-                            </el-button>
-                            <span>{{ item.quantity }}</span>
-                            <el-button>
-                                <plus />+
-                            </el-button>
+                            <el-button @click="minus(item)" :disabled="item.quantity === 0">
+    <minus />-
+</el-button>
+<span>{{ item.quantity }}</span>
+<el-button @click="add(item)">
+    <plus />+
+</el-button>
                         </div>
                         <div>
                             <i class="el-icon-circle-plus-online"></i>
@@ -62,7 +62,7 @@
 
 <script setup >
 import Footer from '../components/Footer.vue'
-import {ref,onMounted} from "vue"
+import {ref,onMounted,computed} from "vue"
 import { get } from '@/api';
 import {useRouter,useRoute} from "vue-router"
 import { Plus, Minus } from '@element-plus/icons-vue';
@@ -75,6 +75,7 @@ let businessId = route.query.businessId;
 
 // 页面显示商品列表对象
 const goods = ref([]);
+const cart = ref(JSON.parse(sessionStorage.getItem('cart')) || []);
 
 // 加载商家详情
 const loadBusinessInfo = () => {
@@ -112,6 +113,38 @@ const loadGoodsByBusinessId = () => {
 };
 
 // 页面加载时调用方法
+// 添加商品
+const add = (item) => {
+    const existItem = cart.value.find(cartItem => cartItem.goodsId === item.goodsId);
+    if (existItem) {
+        existItem.quantity++;
+    } else {
+        item.quantity = 1;
+        cart.value.push(item);
+    }
+    sessionStorage.setItem('cart', JSON.stringify(cart.value));
+    sessionStorage.setItem('business', JSON.stringify(business.value));
+    sessionStorage.setItem('business', JSON.stringify(business.value));
+};
+
+// 减少商品
+const minus = (item) => {
+    const existItem = cart.value.find(cartItem => cartItem.goodsId === item.goodsId);
+    if (existItem && existItem.quantity > 0) {
+        existItem.quantity--;
+        if (existItem.quantity === 0) {
+            const index = cart.value.indexOf(existItem);
+            cart.value.splice(index, 1);
+        }
+    }
+    sessionStorage.setItem('cart', JSON.stringify(cart.value));
+};
+
+// 计算总数
+const totalQuantity = computed(() => {
+    return cart.value.reduce((total, item) => total + item.quantity, 0);
+});
+
 onMounted(() => {
     loadBusinessInfo();
     loadGoodsByBusinessId();
