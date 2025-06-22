@@ -1,0 +1,15 @@
+<script>
+import {reactive,ref} from "vue"
+const obj = reactive({
+    count:200,
+}
+)
+ const add0=()=>{
+ obj.count++;
+ }
+ const count = ref(100);
+const add1 = ()=>{
+  count.value ++;
+ }
+ </script>
+
