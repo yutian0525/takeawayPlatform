@@ -1,6 +1,7 @@
 <template>
     <div class = 'wrapper'>
         <header>
+            <i class="fa fa-angle-left" @click="router.back()"></i> <!-- 添加返回按钮 -->
             <p>商 家 详 细</p>
         </header>
         <!-- 商家信息-->
@@ -64,8 +65,9 @@
 import Footer from '../components/Footer.vue'
 import {ref,onMounted,computed} from "vue"
 import { get } from '@/api';
-import {useRouter,useRoute} from "vue-router"
+import {useRouter,useRoute} from "vue-router" // 保持这个导入
 import { Plus, Minus } from '@element-plus/icons-vue';
+// import { useRouter } from 'vue-router'; // 这一行是重复的，需要删除
 const router = useRouter();  //创建路由对象
 const route = useRoute();
 const business = ref([]);
@@ -313,5 +315,27 @@ li {
     border-radius: 5px;
     font-size: 14px; 
     z-index: 10; 
+}
+
+/* 顶部标题栏 */
+.wrapper header{
+    width:100%; height:12vw;
+    background: linear-gradient(to right,#fff1eb,#ace0f9); /* 示例背景色，可根据实际情况调整 */
+    color:#596164;
+    font-size: 5vw;
+    position: fixed; left:0; top: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.wrapper header p{
+    letter-spacing: 2vw;
+}
+.wrapper header .fa-angle-left { /* 返回按钮样式 */
+    position: absolute;
+    left: 4vw;
+    font-size: 6vw;
+    color: #596164;
 }
 </style>

@@ -66,7 +66,7 @@
 
         <!-- 商家列表信息 -->
         <ul class="business">
-            <li v-for="business in businessList" :key="business.businessId">
+            <li v-for="business in businessList" :key="business.businessId" @click="toBusinessInfo(business.businessId)">
                 <div style="position: relative; z-index:0">
                     <img :src="business.businessImg" />
                     <div class="business-img-quantity">
@@ -138,6 +138,12 @@ const toBusinessList = (id) =>{
     //需要使用路由跳转时 传递参数
     router.push({path:'/businessList',query:{categoryId:id}})
 }
+
+// 新增：跳转到商家详情页面
+const toBusinessInfo = (businessId) => {
+    router.push({ path: '/businessInfo', query: { businessId: businessId } });
+};
+
  //页面初始化的方法
 const init = ()=>{
     loadCategory();
