@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
+import com.soft.entity.Goods;
 import lombok.EqualsAndHashCode;
 
 /**
@@ -36,7 +37,7 @@ public class Cart extends BaseEntity {
     private Integer goodsId;
 
     /**
-     * 所属商家编号-sys_business主键businessId	
+     * 所属商家编号-sys_business主键businessId
      */
     @TableField("business_id")
     private Long businessId;
@@ -46,12 +47,14 @@ public class Cart extends BaseEntity {
      */
     @TableField("account_id")
     private String accountId;
+    // 自定义：商品对象 ，表示该变量不是映射数据库sys_cart表，该字段就是为了查询需要添加的
+
 
     /**
      * 同一类型商品的购买数量
      */
     @TableField("quantity")
     private Integer quantity;
-
-
+    @TableField(exist = false)
+    private Goods goods;
 }

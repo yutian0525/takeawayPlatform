@@ -1,29 +1,31 @@
 <template>
-    <div class = 'wrapper'>
+    <div class='wrapper'>
         <header>
+            <i class="fa fa-angle-left" @click="router.back()"></i> <!-- 添加返回按钮 -->
             <p>商 家 详 细</p>
         </header>
         <!-- 商家信息-->
-         <div class="business-info-banner">
+        <div class="business-info-banner">
             <!-- 查看全部评论-->
-             <div class="top-right">
+            <div class="top-right">
                 <div class="AllComment">
                     查看评论
                     <i class="el-icon-d-arrow-right"></i>
                 </div>
-             </div>
+            </div>
 
-             <div class="business-logo">
+            <div class="business-logo">
                 <img :src="business.businessImg">
-             </div>
+            </div>
 
-             <div class="business-info">
+            <div class="business-info">
                 <h1>{{ business.businessName }}</h1>
-                <p style="color: #333; align">&#165;  {{ business.starPrice }}起送 &nbsp;|&nbsp; &#165; {{ business.deliveryPrice }} 配送</p>
+                <p style="color: #333; align">&#165; {{ business.starPrice }}起送 &nbsp;|&nbsp; &#165; {{
+                business.deliveryPrice }} 配送</p>
                 <p>{{ business.businessExplain }}</p>
-             </div>
-             <ul>
-                <li v-for="(item,index) in goods" :key="item.goodsId" class="list-item">
+            </div>
+            <ul>
+                <li v-for="(item, index) in goods" :key="item.goodsId" class="list-item">
                     <div class="food-left">
                         <!--根据remark属性是否有值，动态显示-->
                         <div class="dish-img-feature" v-if="item.remarkers">
@@ -40,38 +42,43 @@
                         <!-- disabled 标签失败（不可用）-->
                         <div class="quantity-control">
                             <el-button @click="minus(item)" :disabled="item.quantity === 0">
-    <minus />-
-</el-button>
-<span>{{ item.quantity }}</span>
-<el-button @click="add(item)">
-    <plus />+
-</el-button>
+                                <minus />-
+                            </el-button>
+                            <span>{{ item.quantity }}</span>
+                            <el-button @click="add(item)">
+                                <plus />+
+                            </el-button>
                         </div>
                         <div>
                             <i class="el-icon-circle-plus-online"></i>
                         </div>
                     </div>
-                    <div class="mask" v-if="item.statu==0">
+                    <div class="mask" v-if="item.statu == 0">
                         <span>抱歉，该商品已下架</span>
                     </div>
                 </li>
-             </ul>
-         </div>
+            </ul>
+        </div>
     </div>
 </template>
 
-<script setup >
+<script setup>
 import Footer from '../components/Footer.vue'
-import {ref,onMounted,computed} from "vue"
-import { get } from '@/api';
-import {useRouter,useRoute} from "vue-router"
+import { ref, onMounted, computed } from "vue"
+import { get, post } from '@/api';
+import { useRouter, useRoute } from "vue-router"
 import { Plus, Minus } from '@element-plus/icons-vue';
-const router = useRouter();  //创建路由对象
+import { ElMessage } from 'element-plus';
+
+const router = useRouter();
 const route = useRoute();
 const business = ref([]);
 
 // 获得商家编号
 let businessId = route.query.businessId;
+
+// 用户登录信息
+const account = JSON.parse(sessionStorage.getItem("account"));
 
 // 页面显示商品列表对象
 const goods = ref([]);
@@ -81,14 +88,17 @@ const cart = ref(JSON.parse(sessionStorage.getItem('cart')) || []);
 const loadBusinessInfo = () => {
     let url = `/business/info/${businessId}`;
     get(url).then(res => {
-        if (res.data.code == 20000) {
+        if (res.data && res.data.code === 20000) {
             business.value = res.data.resultdata;
         } else {
             ElMessage({
-                message: res.data.message,
+                message: res.data ? res.data.message : '加载商家信息失败',
                 type: 'error',
             });
         }
+    }).catch(error => {
+        console.error('加载商家信息请求异常:', error);
+        ElMessage.error('加载商家信息异常');
     });
 };
 
@@ -96,51 +106,180 @@ const loadBusinessInfo = () => {
 const loadGoodsByBusinessId = () => {
     let url = `/business/listByBusinessId/${businessId}`;
     get(url).then(res => {
-        if (res.data.code == 20000) {
+        if (res.data && res.data.code === 20000) {
             let tempArray = res.data.resultdata;
-            // 循环 tempArray，给每个商品添加 quantity 属性
-            for (let i = 0; i < tempArray.length; i++) {
-                tempArray[i].quantity = 0; // 每个商品的数量默认为 0
+            if (Array.isArray(tempArray)) {
+                for (let i = 0; i < tempArray.length; i++) {
+                    tempArray[i].quantity = 0;
+                    const cartItem = cart.value.find(c => c.goodsId === tempArray[i].goodsId);
+                    if (cartItem) {
+                        tempArray[i].quantity = cartItem.quantity;
+                    }
+                }
+                goods.value = tempArray;
+            } else {
+                console.warn('后端返回的商品列表不是一个数组:', tempArray);
+                goods.value = [];
             }
-            goods.value = tempArray;
         } else {
             ElMessage({
-                message: '商品数据加载失败',
+                message: res.data ? res.data.message : '商品数据加载失败',
                 type: 'error',
             });
         }
+    }).catch(error => {
+        console.error('加载商品列表请求异常:', error);
+        ElMessage.error('加载商品列表异常');
     });
 };
 
-// 页面加载时调用方法
 // 添加商品
-const add = (item) => {
-    const existItem = cart.value.find(cartItem => cartItem.goodsId === item.goodsId);
-    if (existItem) {
-        existItem.quantity++;
+const add = async (item) => {
+    if (!account || !account.accountId) {
+        ElMessage.error('请先登录');
+        router.push('/login');
+        return;
+    }
+
+    const goodsItemInCart = cart.value.find(cartItem => cartItem.goodsId === item.goodsId);
+    const originalQuantity = goodsItemInCart ? goodsItemInCart.quantity : 0;
+
+    // 乐观更新本地数量
+    if (goodsItemInCart) {
+        goodsItemInCart.quantity++;
     } else {
         item.quantity = 1;
         cart.value.push(item);
     }
-    sessionStorage.setItem('cart', JSON.stringify(cart.value));
-    sessionStorage.setItem('business', JSON.stringify(business.value));
-    sessionStorage.setItem('business', JSON.stringify(business.value));
+    // 同步更新 goods 列表中的商品数量，确保 UI 反映最新状态
+    const goodsItemInList = goods.value.find(g => g.goodsId === item.goodsId);
+    if (goodsItemInList) {
+        goodsItemInList.quantity = goodsItemInCart ? goodsItemInCart.quantity : item.quantity;
+    }
+
+    let apiEndpoint = '';
+    let requestBody = {
+        goodsId: item.goodsId,
+        businessId: business.value.businessId,
+        accountId: account.accountId,
+        quantity: goodsItemInCart ? goodsItemInCart.quantity : item.quantity,
+    };
+
+    if (originalQuantity === 0) {
+        // 第一次添加，调用 /cart/add
+        apiEndpoint = '/cart/add';
+    } else {
+        // 已经存在，更新数量，调用 /cart/update
+        apiEndpoint = '/cart/update';
+    }
+
+    try {
+        const res = await post(apiEndpoint, requestBody, true);
+
+        if (res.data && res.data.code === 20000) {
+            ElMessage.success('商品已添加到购物车');
+            sessionStorage.setItem('cart', JSON.stringify(cart.value));
+            sessionStorage.setItem('business', JSON.stringify(business.value));
+        } else {
+            ElMessage.error(res.data ? res.data.message : '添加购物车失败');
+            // 后端操作失败，回滚本地数量变化
+            if (goodsItemInCart) {
+                goodsItemInCart.quantity--;
+            } else {
+                cart.value.pop();
+            }
+            if (goodsItemInList) {
+                goodsItemInList.quantity = originalQuantity;
+            }
+        }
+    } catch (error) {
+        console.error('添加购物车请求异常:', error);
+        ElMessage.error('添加购物车异常');
+        // 请求本身失败，回滚本地数量变化
+        if (goodsItemInCart) {
+            goodsItemInCart.quantity--;
+        } else {
+            cart.value.pop();
+        }
+        if (goodsItemInList) {
+            goodsItemInList.quantity = originalQuantity;
+        }
+    }
 };
 
 // 减少商品
-const minus = (item) => {
-    const existItem = cart.value.find(cartItem => cartItem.goodsId === item.goodsId);
-    if (existItem && existItem.quantity > 0) {
-        existItem.quantity--;
-        if (existItem.quantity === 0) {
-            const index = cart.value.indexOf(existItem);
-            cart.value.splice(index, 1);
+const minus = async (item) => {
+    if (!account || !account.accountId) {
+        ElMessage.error('请先登录');
+        router.push('/login');
+        return;
+    }
+
+    const goodsItemInCart = cart.value.find(cartItem => cartItem.goodsId === item.goodsId);
+
+    if (!goodsItemInCart || goodsItemInCart.quantity === 0) {
+        return; // 如果购物车中没有该商品或数量已为0，则不执行任何操作
+    }
+
+    const originalQuantity = goodsItemInCart.quantity;
+
+    // 乐观更新本地数量
+    goodsItemInCart.quantity--;
+
+    // 同步更新 goods 列表中的商品数量
+    const goodsItemInList = goods.value.find(g => g.goodsId === item.goodsId);
+    if (goodsItemInList) {
+        goodsItemInList.quantity = goodsItemInCart.quantity;
+    }
+
+    let apiEndpoint = '';
+    let requestBody = {
+        goodsId: item.goodsId,
+        businessId: business.value.businessId,
+        accountId: account.accountId,
+        quantity: goodsItemInCart.quantity,
+    };
+
+    if (goodsItemInCart.quantity === 0) {
+        // 数量变为0，调用 /cart/remove
+        apiEndpoint = '/cart/remove';
+        // 对于 remove 接口，quantity 字段可能不需要，但为了统一传递，可以保留
+        // requestBody = { goodsId: item.goodsId, businessId: business.value.businessId, accountId: account.accountId };
+    } else {
+        // 数量大于0，更新数量，调用 /cart/update
+        apiEndpoint = '/cart/update';
+    }
+
+    try {
+        const res = await post(apiEndpoint, requestBody, true);
+
+        if (res.data && res.data.code === 20000) {
+            ElMessage.success('商品数量已更新');
+            if (goodsItemInCart.quantity === 0) {
+                const index = cart.value.indexOf(goodsItemInCart);
+                cart.value.splice(index, 1); // 如果数量为0，从本地购物车中移除
+            }
+            sessionStorage.setItem('cart', JSON.stringify(cart.value));
+        } else {
+            ElMessage.error(res.data ? res.data.message : '更新购物车失败');
+            // 后端操作失败，回滚本地数量变化
+            goodsItemInCart.quantity = originalQuantity;
+            if (goodsItemInList) {
+                goodsItemInList.quantity = originalQuantity;
+            }
+        }
+    } catch (error) {
+        console.error('更新购物车请求异常:', error);
+        ElMessage.error('更新购物车异常');
+        // 请求本身失败，回滚本地数量变化
+        goodsItemInCart.quantity = originalQuantity;
+        if (goodsItemInList) {
+            goodsItemInList.quantity = originalQuantity;
         }
     }
-    sessionStorage.setItem('cart', JSON.stringify(cart.value));
 };
 
-// 计算总数
+// 计算总数 (此函数未直接使用，但保留)
 const totalQuantity = computed(() => {
     return cart.value.reduce((total, item) => total + item.quantity, 0);
 });
@@ -150,7 +289,8 @@ onMounted(() => {
     loadGoodsByBusinessId();
 });
 </script>
-<style>
+
+<style scoped>
 .wrapper {
     padding: 0;
     background-color: #f8f8f8;
@@ -195,35 +335,32 @@ header {
 }
 
 .business-logo img {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
+    object-fit: cover;
     margin-bottom: 10px;
 }
 
 .business-info h1 {
     font-size: 24px;
-    margin: 0 0 10px;
+    margin: 0 0 5px;
     color: #333;
 }
 
 .business-info p {
     font-size: 14px;
     color: #666;
-    margin: 5px 0;
-}
-
-.business-info p:first-child {
-    color: #ff5722;
+    margin: 0;
 }
 
 ul {
     list-style: none;
     padding: 0;
-    margin-top: 20px;
+    margin: 0;
 }
 
-li {
+.list-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -290,7 +427,8 @@ li {
 
 /* .list-item的定位样式 */
 .list-item {
-    position: relative;  /* 为li建立定位上下文 */
+    position: relative;
+    /* 为li建立定位上下文 */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -311,7 +449,36 @@ li {
     justify-content: center;
     align-items: center;
     border-radius: 5px;
-    font-size: 14px; 
-    z-index: 10; 
+    font-size: 14px;
+    z-index: 10;
+}
+
+/* 顶部标题栏 */
+.wrapper header {
+    width: 100%;
+    height: 12vw;
+    background: linear-gradient(to right, #fff1eb, #ace0f9);
+    /* 示例背景色，可根据实际情况调整 */
+    color: #596164;
+    font-size: 5vw;
+    position: fixed;
+    left: 0;
+    top: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.wrapper header p {
+    letter-spacing: 2vw;
+}
+
+.wrapper header .fa-angle-left {
+    /* 返回按钮样式 */
+    position: absolute;
+    left: 4vw;
+    font-size: 6vw;
+    color: #596164;
 }
 </style>
