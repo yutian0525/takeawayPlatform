@@ -21,29 +21,28 @@
     </div>
 
 
-    <h3>商家名称</h3>
+    <h3>{{ business.businessName }}</h3>
     <!-- 订单明细部分 -->
     <ul class="order-detailed">
-      <li>
+      <li v-for="item in cart" :key="item.goodsId">
         <div class="order-detailed-left">
-          <img src="../assets/dcfl01.png">
-          <p>商品名称 x 11</p>
+          <img :src="item.goodsImg">
+          <p>{{ item.goodsName }} x {{ item.quantity }}</p>
         </div>
-        <p>&#165; 100.00</p>
+        <p>&#165; {{ item.goodsPrice * item.quantity }}</p>
       </li>
-
     </ul>
     <div class="order-deliveryfee">
       <p>配送费</p>
-      <p>&#165; 10</p>
+      <p>&#165; {{ business.deliveryPrice }}</p>
     </div>
 
     <!-- 合计部分 -->
     <div class="total">
       <div class="total-left">总价：
-        &#165; 1000
+        &#165; {{ totalPrice }}
       </div>
-      <div class="total-right" >
+      <div class="total-right" @click="toPayment">
         去支付
       </div>
     </div>
@@ -51,13 +50,37 @@
 </template>
 
 <script setup>
-  import {ref,reactive} from "vue"
+  import {ref, reactive, onMounted, computed} from "vue"
+import {useRouter, useRoute} from "vue-router"
 
-  const deliveryAddress = ref({
+  const router = useRouter();
+const route = useRoute();
+
+const business = ref({});
+const cart = ref([]);
+const deliveryAddress = ref({
     contactName:'王思聪',
     contactSex:1,
     contactTel:'18845678989'
   });
+
+const totalPrice = computed(() => {
+    let total = 0;
+    for (const item of cart.value) {
+        total += item.goodsPrice * item.quantity;
+    }
+    total += business.value.deliveryPrice;
+    return total;
+});
+
+const toPayment = () => {
+    router.push('/payment');
+};
+
+onMounted(() => {
+    cart.value = JSON.parse(sessionStorage.getItem('cart')) || [];
+    business.value = JSON.parse(sessionStorage.getItem('business')) || {};
+});
 </script>
 
 <style scoped>
