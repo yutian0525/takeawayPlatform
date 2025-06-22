@@ -49,7 +49,7 @@
                 <span>合计</span>
                 <span class="amount">¥{{ calculateOverallTotal() }}</span>
             </div>
-            <button class="checkout-btn">结算 ></button>
+            <button class="checkout-btn" @click="handleCheckout">结算 ></button>
         </div>
        
         <Footer></Footer>
@@ -60,18 +60,19 @@
     import { ref, computed, onMounted } from 'vue';
     import { useRouter } from 'vue-router';
     import Footer from '@/components/Footer.vue';
-    import { get, post } from '@/api/index'; // 修改：请求工具的导入路径
-    import { getSession } from '@/utils/storage'; // 修改：存储工具的导入路径和函数名
-    import { ElMessage } from 'element-plus'; // 假设您使用 Element Plus 进行消息提示
+    import { get, post } from '@/api/index';
+    import { getSession, setSession } from '@/utils/storage';
+    import { ElMessage } from 'element-plus';
 
     const router = useRouter();
-    const account = getSession('account'); // 修改：函数名
-
-    const cartList = ref([]); // 存储购物车数据，按商家分组
+    const cartList = ref([]);
+    
+    // 从 sessionStorage 获取用户信息
+    const account = ref(getSession('account'));
 
     // 加载购物车数据
     const loadCartData = async () => {
-        if (!account) {
+        if (!account.value) {
             ElMessage.error('请先登录');
             router.push('/login');
             return;
@@ -79,7 +80,7 @@
 
         try {
             // 1. 获取所有购物车商品
-            const cartRes = await get(`/cart/listCartByAccountId/${account.accountId}`);
+            const cartRes = await get(`/cart/listCartByAccountId/${account.value.accountId}`);
             if (cartRes.data.code !== 20000) {
                 ElMessage.error('加载购物车数据失败');
                 return;
@@ -181,7 +182,7 @@
 
     // 更新商品数量 (与后端交互)
     const updateCart = async (business, item, num) => {
-        if (!account) {
+        if (!account.value) {
             ElMessage.error('请先登录');
             router.push('/login');
             return;
@@ -194,7 +195,7 @@
                 const res = await post("/cart/remove", {
                     goodsId: item.goods.goodsId,
                     businessId: business.businessId,
-                    accountId: account.accountId,
+                    accountId: account.value.accountId,  // 修改这里
                 }, true);
                 if (res.data.code === 20000) {
                     ElMessage.success('商品已从购物车移除');
@@ -217,7 +218,7 @@
                 const res = await post("/cart/update", {
                     goodsId: item.goods.goodsId,
                     businessId: business.businessId,
-                    accountId: account.accountId,
+                    accountId: account.value.accountId,  // 修改这里
                     quantity: newQuantity
                 }, true);
                 if (res.data.code === 20000) {
@@ -316,7 +317,77 @@
     onMounted(() => {
         loadCartData();
     });
+     const handleCheckout = async () => {
+        if (!account.value) {
+            ElMessage.error('请先登录');
+            router.push('/login');
+            return;
+        }
+
+        // 获取选中的商品
+        const selectedItems = [];
+        let selectedBusiness = null;
+        
+        cartList.value.forEach(business => {
+            const items = business.items.filter(item => item.selected);
+            if (items.length > 0) {
+                if (selectedBusiness && selectedBusiness.businessId !== business.businessId) {
+                    ElMessage.warning('暂时只支持购买同一商家的商品');
+                    return;
+                }
+                selectedBusiness = business;
+                selectedItems.push(...items);
+            }
+        });
+
+        if (selectedItems.length === 0) {
+            ElMessage.warning('请选择要结算的商品');
+            return;
+        }
+
+        try {
+            // 准备订单数据
+            const orderDetails = selectedItems.map(item => ({
+                goodsId: item.goods.goodsId,
+                goodsImg: item.goods.goodsImg,
+                goodsName: item.goods.goodsName,
+                goodsPrice: item.goods.goodsPrice,
+                quantity: item.quantity
+            }));
+
+            const businessInfo = {
+                businessId: selectedBusiness.businessId,
+                businessName: selectedBusiness.businessName,
+                businessAddress: selectedBusiness.businessAddress,
+                deliveryPrice: selectedBusiness.minDeliveryPrice
+            };
+
+            // 保存到 sessionStorage
+            setSession('orderDetails', orderDetails);
+            setSession('businessInfo', businessInfo);
+
+            console.log('保存的订单数据:', orderDetails); // 调试用
+            console.log('保存的商家信息:', businessInfo); // 调试用
+
+            // 跳转到订单确认页面
+            router.push('/orderConfirm');
+        } catch (error) {
+            console.error('保存订单详情失败:', error);
+            ElMessage.error('创建订单失败，请重试');
+        }
+    };
+
+    // 在组件挂载时从 sessionStorage 恢复数据
+    onMounted(() => {
+        const savedCartList = getSession('cartList');
+        if (savedCartList) {
+            cartList.value = savedCartList;
+        }
+        loadCartData();
+    });
 </script>
+
+   
 
 <style scoped>
 /* 顶部标题栏 */
