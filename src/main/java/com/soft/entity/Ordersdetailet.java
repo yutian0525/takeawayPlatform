@@ -1,5 +1,6 @@
 package com.soft.entity;
 
+
 import com.soft.common.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;

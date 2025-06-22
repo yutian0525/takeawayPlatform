@@ -1,5 +1,4 @@
 package com.soft.service.impl;
-
 import com.soft.entity.Favorite;
 import com.soft.mapper.FavoriteMapper;
 import com.soft.service.FavoriteService;

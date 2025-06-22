@@ -50,36 +50,141 @@
 </template>
 
 <script setup>
-  import {ref, reactive, onMounted, computed} from "vue"
-import {useRouter, useRoute} from "vue-router"
+import { ref, reactive, onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage } from 'element-plus';
+import { get, post } from '@/api/index';
+import { getSession, setSession } from '@/utils/storage';
 
-  const router = useRouter();
-const route = useRoute();
-
+const router = useRouter();
+const account = ref(getSession('account'));
+const orderDetails = ref(getSession('orderDetails') || []);
+const businessInfo = ref(getSession('businessInfo') || {});
+const totalAmount = ref(getSession('totalAmount') || '0.00');
+const deliveryAddress = ref(null);
 const business = ref({});
 const cart = ref([]);
-const deliveryAddress = ref({
-    contactName:'王思聪',
-    contactSex:1,
-    contactTel:'18845678989'
-  });
 
+// 计算总价（包含配送费）
+const finalTotal = computed(() => {
+    const subtotal = parseFloat(totalAmount.value);
+    const delivery = parseFloat(businessInfo.value.deliveryPrice || 0);
+    return (subtotal + delivery).toFixed(2);
+});
+
+onMounted(async () => {
+    if (!account.value) {
+        ElMessage.error('请先登录');
+        router.push('/login');
+        return;
+    }
+
+    if (!orderDetails.value.length) {
+        ElMessage.error('订单数据不存在');
+        router.push('/cart');
+        console.log(orderDetails.value);
+        return;
+    }
+
+    // 获取默认收货地址
+    try {
+        const addressRes = await get(`/address/default/${account.value.accountId}`);
+        if (addressRes.data.code === 20000) {
+            deliveryAddress.value = addressRes.data.resultdata;
+            // 保存地址信息到 sessionStorage
+            setSession('deliveryAddress', deliveryAddress.value);
+        }
+    } catch (error) {
+        console.error('获取默认地址失败:', error);
+    }
+});
+
+
+// 计算总价（包含配送费）
 const totalPrice = computed(() => {
     let total = 0;
     for (const item of cart.value) {
         total += item.goodsPrice * item.quantity;
     }
-    total += business.value.deliveryPrice;
-    return total;
+    total += business.value.deliveryPrice || 0;
+    return total.toFixed(2);
 });
 
-const toPayment = () => {
-    router.push('/payment');
+// 跳转到支付页面
+const toPayment = async () => {
+    if (!deliveryAddress.value) {
+        ElMessage.warning('请选择配送地址');
+        return;
+    }
+
+    try {
+        // 创建订单
+        const orderData = {
+            accountId: account.accountId,
+            businessId: business.value.businessId,
+            orderTotal: totalPrice.value,
+            deliveryAddressId: deliveryAddress.value.id,
+            orderItems: cart.value.map(item => ({
+                goodsId: item.goodsId,
+                quantity: item.quantity,
+                itemPrice: item.goodsPrice
+            }))
+        };
+
+        // 这里需要后端提供创建订单的接口
+        const res = await post('/order/create', orderData);
+        
+        if (res.data.code === 20000) {
+            // 保存订单ID，用于支付页面使用
+            sessionStorage.setItem('orderId', res.data.resultdata);
+            router.push('/payment');
+        } else {
+            ElMessage.error(res.data.message || '创建订单失败');
+        }
+    } catch (error) {
+        console.error('创建订单失败:', error);
+        ElMessage.error('创建订单失败，请重试');
+    }
 };
 
-onMounted(() => {
-    cart.value = JSON.parse(sessionStorage.getItem('cart')) || [];
-    business.value = JSON.parse(sessionStorage.getItem('business')) || {};
+// 跳转到地址选择页面
+const toAddress = () => {
+    router.push('/address');
+};
+
+onMounted(async () => {
+    if (!account.value) {
+        ElMessage.error('请先登录');
+        router.push('/login');
+        return;
+    }
+
+    // 从 sessionStorage 获取购物车和商家信息
+    const orderDetails = getSession('orderDetails');
+    const businessInfo = getSession('businessInfo');
+    
+    console.log('获取到的订单数据:', orderDetails); // 调试用
+    console.log('获取到的商家信息:', businessInfo); // 调试用
+
+    if (!orderDetails || !businessInfo) {
+        ElMessage.error('订单数据不存在');
+        router.push('/cart');
+        return;
+    }
+
+    // 设置购物车数据
+    cart.value = orderDetails;
+    business.value = businessInfo;
+
+    // 获取默认收货地址
+    try {
+        const addressRes = await get(`/address/default/${account.value.accountId}`);
+        if (addressRes.data.code === 20000) {
+            deliveryAddress.value = addressRes.data.resultdata;
+        }
+    } catch (error) {
+        console.error('获取默认地址失败:', error);
+    }
 });
 </script>
 
