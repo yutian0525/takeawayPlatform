@@ -10,6 +10,7 @@ import Address from '@/views/Address.vue'
 import Payment from '@/views/Payment.vue'
 import UserCart from '@/views/UserCart.vue'
 import UserOrders from '@/views/UserOrders.vue'
+import AccountChange from '@/views/AccountChange.vue'
 
 
 const routes = [
@@ -67,6 +68,11 @@ const routes = [
     path: '/orderList',
     name: 'UserOrder',
     component: UserOrders
+  },
+  {
+    path: '/accountChange',
+    name: 'AccountChange',
+    component: AccountChange
   }
 ]
 

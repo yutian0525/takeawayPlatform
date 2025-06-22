@@ -84,4 +84,22 @@ public class AccountController extends BaseController {
         aService.save(account);
         return Result.success("用户注册成功，请登录");
     }
+
+    @GetMapping("/checkPassword/{accountId}/{value}")
+    public Result checkPassword(@PathVariable String accountId,@PathVariable String value){
+        String newValue = MD5Utils.md5(value);
+        Account account = aService.getById(accountId);
+
+        if (account == null) {
+            // 用户不存在
+            return Result.fail("用户不存在");
+        }
+
+        // 比较数据库中的哈希值和新哈希值
+        if (account.getPassword().equals(newValue)) {
+            return Result.success("密码验证成功");
+        } else {
+            return Result.fail("密码验证失败");
+        }
+    }
 }
