@@ -1,5 +1,5 @@
 package com.soft.controller;
-
+import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.soft.common.Result;
 import com.soft.entity.Business;
@@ -53,6 +53,35 @@ public class CartController extends BaseController {
     });
     return Result.success(list);
     }
-
+    //插入购物车数据
+@PostMapping("/add")
+public Result add(@RequestBody Cart cart){
+cart.setCreated(LocalDateTime.now());
+cart.setUpdated(LocalDateTime.now());
+cart.setStatu(1);
+cService.save(cart);
+//cart.getCartId() 得到录入购物车表中 自动生成主键值。
+return Result.success(cart.getCartId());
+}
+//更新购物车数据 （数量）
+@PostMapping("/update")
+public Result update(@RequestBody Cart cart){
+cart.setUpdated(LocalDateTime.now());
+QueryWrapper<Cart> qw = new QueryWrapper<>();
+qw.eq("goods_id",cart.getGoodsId());
+qw.eq("account_id",cart.getAccountId());
+cService.update(cart,qw);
+return Result.success("购物车数更新成功");
+}
+//删除购物车数据
+@PostMapping("/remove")
+public Result remove(@RequestBody Cart cart){
+cart.setUpdated(LocalDateTime.now());
+QueryWrapper<Cart> qw = new QueryWrapper<>();
+qw.eq("goods_id",cart.getGoodsId());
+qw.eq("account_id",cart.getAccountId());
+cService.remove(qw);
+return Result.success("购物车数删除成功");
+}
 
 }

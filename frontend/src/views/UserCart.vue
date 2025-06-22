@@ -84,9 +84,28 @@
                 ElMessage.error('加载购物车数据失败');
                 return;
             }
-            const cartArray = cartRes.data.resultdata;
+            let cartArray = cartRes.data.resultdata;
 
-            // 2. 按商家ID分组商品，并收集唯一的商家ID
+            // 2. 为每个购物车商品获取其对应的商品详情
+            // 使用 Promise.all 并行请求所有商品的详细信息
+            const goodsPromises = cartArray.map(async (cartItem) => {
+                // 假设后端有一个 /goods/info/{goodsId} 接口来获取商品详情
+                const goodsInfoRes = await get(`/goods/info/${cartItem.goodsId}`);
+                if (goodsInfoRes.data.code === 20000) {
+                    cartItem.goods = goodsInfoRes.data.resultdata; // 将完整的商品对象附加到 cartItem 上
+                } else {
+                    console.warn(`加载商品ID ${cartItem.goodsId} 信息失败:`, goodsInfoRes.data.message);
+                    cartItem.goods = null; // 如果获取失败，将 goods 设为 null
+                }
+                return cartItem;
+            });
+            // 等待所有商品详情请求完成
+            cartArray = await Promise.all(goodsPromises);
+
+            // 过滤掉那些没有成功加载商品详情的购物车项，避免后续报错
+            cartArray = cartArray.filter(item => item.goods !== null);
+
+            // 3. 按商家ID分组商品，并收集唯一的商家ID
             const groupedCartMap = new Map();
             const businessIdsToFetch = new Set();
 
@@ -104,11 +123,11 @@
                         items: []
                     });
                 }
-                // cartItem 包含 goods 对象和 quantity
+                // cartItem 现在已经包含了 goods 对象
                 groupedCartMap.get(businessId).items.push({ ...cartItem, selected: true }); // 默认商品也全选
             });
 
-            // 3. 批量获取商家信息
+            // 4. 批量获取商家信息
             const businessPromises = Array.from(businessIdsToFetch).map(async (id) => {
                 const businessInfoRes = await get(`/business/info/${id}`);
                 if (businessInfoRes.data.code === 20000) {
@@ -123,7 +142,7 @@
             });
             await Promise.all(businessPromises);
 
-            // 4. 更新 cartList
+            // 5. 更新 cartList
             cartList.value = Array.from(groupedCartMap.values());
 
         } catch (error) {
