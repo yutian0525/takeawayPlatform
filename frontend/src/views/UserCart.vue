@@ -4,8 +4,8 @@
             <p>购物车</p>
         </header>
         <div class="header">
-            <img :src="user.avatar" alt="User Avatar" class="avatar" />
-            <h2>{{ account.name }}</h2>
+            <!-- <img :src="user.avatar" alt="User Avatar" class="avatar" />
+            <h2>{{ account.name }}</h2> -->
         </div>
        
     <Footer></Footer>
