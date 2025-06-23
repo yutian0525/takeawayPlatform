@@ -14,6 +14,8 @@ import AccountChange from '@/views/AccountChange.vue'
 import Comments from '@/views/comments.vue'
 import MyComments from '@/views/myComments.vue'
 import CategoryList from '@/views/CategoryList.vue'
+import WriteComment from '@/views/WriteComment.vue'
+import UserFavorites from '@/views/UserFavorites.vue'
 
 const routes = [
   {
@@ -94,6 +96,15 @@ const routes = [
     path: '/categoryList',
     name: 'categoryList',
     component: CategoryList
+  },{
+    path: '/writeComment',
+    name: 'writeComment',
+    component: WriteComment
+  },
+  {
+    path: '/userFavorites',
+    name: 'userFavorites',
+    component: UserFavorites
   }
 ]
 

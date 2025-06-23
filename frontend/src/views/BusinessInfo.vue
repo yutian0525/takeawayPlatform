@@ -60,6 +60,10 @@
             </ul>
         </div>
     </div>
+    <div class="write-comment-btn" @click="toWriteComment">
+        <i class="fa fa-pencil"></i>
+        <span>写评价</span>
+    </div>
 </template>
 
 <script setup>
@@ -295,6 +299,21 @@ const toComments = () => {
     });
 };
 
+// 跳转到写评价页面
+const toWriteComment = () => {
+    if (!account) {
+        ElMessage.error('请先登录');
+        router.push('/login');
+        return;
+    }
+    router.push({
+        path: '/writeComment',
+        query: {
+            business: JSON.stringify(business.value)
+        }
+    });
+};
+
 onMounted(() => {
     loadBusinessInfo();
     loadGoodsByBusinessId();
@@ -342,6 +361,30 @@ header {
 
 .AllComment i {
     margin-left: 5px;
+    font-size: 14px;
+}
+
+.write-comment-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #409EFF;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+}
+
+.write-comment-btn i {
+    font-size: 16px;
+}
+
+.write-comment-btn span {
     font-size: 14px;
 }
 

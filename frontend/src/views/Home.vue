@@ -77,8 +77,8 @@
                 <div class="business-info">
                     <div class="business-info-h">
                         <h3>{{ business.businessName }}</h3>
-                            <div class="business-info-like">
-                            <i class="heart_icon" />
+                            <div class="business-info-like" @click.stop="toggleFavorite(business.businessId)">
+                            <i :class="[business.isFavorite ? 'heart_icon_active' : 'heart_icon']" />
                             </div>
                     </div>
                     <div class="business-info-star">
@@ -112,6 +112,7 @@ import Footer from '@/components/Footer.vue';
 import {get,post} from '@/api/index'
 import router from '@/router';
 import { getSessionStorage } from "@/common.js";
+import { ElMessage } from 'element-plus';
 
 // 用户登录信息
 const account = JSON.parse(sessionStorage.getItem("account"))
@@ -125,9 +126,112 @@ const businessList = ref([]);
 //加载页面的商家数据
 const loadBusiness = ()=>{
     get('/business/list').then(res=>{
-    businessList.value = res.data.resultdata;
- });
- }
+        const businesses = res.data.resultdata;
+        // 如果用户已登录，检查每个商家是否被收藏
+        if (isLogin.value) {
+            // 为每个商家添加isFavorite属性，默认为false
+            businesses.forEach(business => {
+                business.isFavorite = false;
+                // 检查用户是否已收藏该商家
+                checkFavoriteStatus(business.businessId);
+            });
+        }
+        businessList.value = businesses;
+    });
+};
+
+// 检查商家是否被收藏
+const checkFavoriteStatus = (businessId) => {
+    if (!isLogin.value) return;
+    
+    get('/favorite/check', {
+        accountId: account.accountId,
+        businessId: businessId
+    }).then(res => {
+        console.log('检查收藏状态响应:', res.data);
+        // 兼容两种返回格式
+        const isSuccess = res.data.code === 200 || res.data.code === 20000;
+        const isFavorite = res.data.data === true || res.data.resultdata === true;
+        
+        if (isSuccess && isFavorite) {
+            // 使用Vue的响应式API更新状态
+            const index = businessList.value.findIndex(b => b.businessId === businessId);
+            if (index !== -1) {
+                // 创建一个新对象来替换原对象，确保响应式更新
+                const updatedBusiness = { ...businessList.value[index], isFavorite: true };
+                businessList.value.splice(index, 1, updatedBusiness);
+                console.log(`商家 ${businessId} 已被收藏，更新状态为:`, updatedBusiness.isFavorite);
+            }
+        }
+    }).catch(err => {
+        console.error('检查收藏状态出错:', err);
+    });
+};
+
+// 切换收藏状态
+const toggleFavorite = (businessId) => {
+    if (!isLogin.value) {
+        // 如果用户未登录，跳转到登录页面
+        ElMessage.warning('请先登录');
+        router.push('/login');
+        return;
+    }
+    
+    const business = businessList.value.find(b => b.businessId === businessId);
+    if (!business) return;
+    
+    console.log('切换收藏状态，当前状态:', business.isFavorite, '商家ID:', businessId);
+    
+    if (business.isFavorite) {
+        // 取消收藏
+        post('/favorite/cancel', {
+            accountId: account.accountId,
+            businessId: businessId
+        }, false).then(res => { // 设置为false，使用表单格式提交
+            console.log('取消收藏响应:', res.data);
+            if (res.data.code === 200 || res.data.code === 20000) {
+                // 使用Vue的响应式API更新状态
+                const index = businessList.value.findIndex(b => b.businessId === businessId);
+                if (index !== -1) {
+                    // 创建一个新对象来替换原对象，确保响应式更新
+                    const updatedBusiness = { ...businessList.value[index], isFavorite: false };
+                    businessList.value.splice(index, 1, updatedBusiness);
+                    console.log(`商家 ${businessId} 取消收藏成功，更新状态为:`, updatedBusiness.isFavorite);
+                }
+                ElMessage.success('取消收藏成功');
+            } else {
+                ElMessage.error(res.data.msg || res.data.message || '取消收藏失败');
+            }
+        }).catch(err => {
+            console.error('取消收藏出错:', err);
+            ElMessage.error('取消收藏失败，请稍后重试');
+        });
+    } else {
+        // 添加收藏
+        post('/favorite/add', {
+            accountId: account.accountId,
+            businessId: businessId
+        }, true).then(res => { // 设置为true，使用JSON格式提交
+            console.log('添加收藏响应:', res.data);
+            if (res.data.code === 200 || res.data.code === 20000) {
+                // 使用Vue的响应式API更新状态
+                const index = businessList.value.findIndex(b => b.businessId === businessId);
+                if (index !== -1) {
+                    // 创建一个新对象来替换原对象，确保响应式更新
+                    const updatedBusiness = { ...businessList.value[index], isFavorite: true };
+                    businessList.value.splice(index, 1, updatedBusiness);
+                    console.log(`商家 ${businessId} 收藏成功，更新状态为:`, updatedBusiness.isFavorite);
+                }
+                ElMessage.success('收藏成功');
+            } else {
+                ElMessage.error(res.data.msg || res.data.message || '收藏失败');
+            }
+        }).catch(err => {
+            console.error('收藏出错:', err);
+            ElMessage.error('收藏失败，请稍后重试');
+        });
+    }
+}
  //加载页面的商家分类
 const loadCategory=()=>{
     get('/category/list').then(res=>{
@@ -345,12 +449,24 @@ init();
     }
     
     .wrapper .business li .business-info .business-info-h .business-info-like .heart_icon{
+        background-image: url(../assets/unHeart.svg);
+        width:8vw;
+        height:6vw;
+        display: block;
+        background-size: cover;
+        background-position: center;
+        opacity: 0.6;
+    }
+    
+    .wrapper .business li .business-info .business-info-h .business-info-like .heart_icon_active{
         background-image: url(../assets/heart.png);
         width:8vw;
         height:7vw;
         display: block;
         background-size: cover;
         background-position: center;
+        opacity: 1;
+        /* filter: hue-rotate(330deg) saturate(1.5); */
     }
 
     .wrapper .business li .business-info .business-info-star{
