@@ -32,7 +32,7 @@
                 </div>
                 <div class="order-actions">
                     <!-- 新增删除订单按钮 -->
-                    <button class="delete-btn" @click.stop="deleteOrder(order.orderId)">删除订单</button> <!-- .stop 阻止事件冒泡到父级，避免同时触发 goToOrderDetail -->
+                   
                     <button class="review-btn" @click.stop="goToReview(order.orderId)">去评价 ></button> <!-- .stop 阻止事件冒泡 -->
                 </div>
             </div>
@@ -176,8 +176,8 @@ header p {
 }
 
 .search-box {
-    margin-top: 14vw; /* 为顶部固定导航栏留出空间 */
-    padding: 2vw 4vw;
+    margin-top: 8vw; /* 为顶部固定导航栏留出空间 */
+  
     position: relative;
 }
 
