@@ -13,7 +13,7 @@
         <el-form-item label="昵称" prop="accountName">
             <el-input v-model="account.accountName" placeholder="请输入新昵称"/>
         </el-form-item>
-        <el-form-item label="性别" prop="accountSex">
+        <el-form-item label="性别" :prop="accountSex">
             <el-radio-group v-model="account.accountSex">
                 <el-radio :value=1>男</el-radio>
                 <el-radio :value=0>女</el-radio>
