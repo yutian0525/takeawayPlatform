@@ -8,7 +8,7 @@
         <div class="business-info-banner">
             <!-- 查看全部评论-->
             <div class="top-right">
-                <div class="AllComment">
+                <div class="AllComment" @click="toComments">
                     查看评论
                     <i class="el-icon-d-arrow-right"></i>
                 </div>
@@ -90,6 +90,7 @@ const loadBusinessInfo = () => {
     get(url).then(res => {
         if (res.data && res.data.code === 20000) {
             business.value = res.data.resultdata;
+            console.log(business.value);
         } else {
             ElMessage({
                 message: res.data ? res.data.message : '加载商家信息失败',
@@ -283,6 +284,16 @@ const minus = async (item) => {
 const totalQuantity = computed(() => {
     return cart.value.reduce((total, item) => total + item.quantity, 0);
 });
+
+// 跳转到评论页面
+const toComments = () => {
+    router.push({
+        path: '/comments',
+        query: {
+            business: JSON.stringify(business.value)
+        }
+    });
+};
 
 onMounted(() => {
     loadBusinessInfo();
