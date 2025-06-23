@@ -24,4 +24,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     public List<Map<String, Object>> getCommentListWithBusiness(String accountId) {
         return commentMapper.getCommentListWithBusiness(accountId);
     }
+    
+    @Override
+    public List<Map<String, Object>> getCommentListWithAccount(Long businessId) {
+        return commentMapper.getCommentListWithAccount(businessId);
+    }
 }

@@ -26,10 +26,25 @@
         SELECT 
             c.co_id, c.account_id, c.business_id, c.order_id, 
             c.rate, c.co_text, c.co_img, c.created, c.updated, c.statu,
-            b.business_name, b.business_address, b.business_explain
+            b.business_name, b.business_address, b.business_explain, b.business_img,
+            a.account_name, a.account_img
         FROM sys_comment c
         LEFT JOIN sys_business b ON c.business_id = b.business_id
+        LEFT JOIN sys_account a ON c.account_id = a.account_id
         WHERE c.account_id = #{accountId}
+        AND c.statu = 1
+        ORDER BY c.created DESC
+    </select>
+    
+    <!-- 获取评论列表及关联的用户信息 -->
+    <select id="getCommentListWithAccount" resultType="java.util.Map">
+        SELECT 
+            c.co_id, c.account_id, c.business_id, c.order_id, 
+            c.rate, c.co_text, c.co_img, c.created, c.updated, c.statu,
+            a.account_name, a.account_img
+        FROM sys_comment c
+        LEFT JOIN sys_account a ON c.account_id = a.account_id
+        WHERE c.business_id = #{businessId}
         AND c.statu = 1
         ORDER BY c.created DESC
     </select>
