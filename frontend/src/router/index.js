@@ -11,7 +11,7 @@ import Payment from '@/views/Payment.vue'
 import UserCart from '@/views/UserCart.vue'
 import UserOrders from '@/views/UserOrders.vue'
 import AccountChange from '@/views/AccountChange.vue'
-
+import Comments from '@/views/comments.vue'
 
 const routes = [
   {
@@ -73,6 +73,11 @@ const routes = [
     path: '/accountChange',
     name: 'AccountChange',
     component: AccountChange
+  },
+  {
+    path: '/comments',
+    name: 'comments',
+    component: Comments
   }
 ]
 
