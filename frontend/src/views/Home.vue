@@ -24,7 +24,8 @@
         
         <!-- 商品的分类信息 -->
         <ul class="category-ul">
-            <li v-for="category in categoryList" :key="category.categoryId" @click="toBusinessList(category.categoryId)">
+            <span @click="toCategoryList()">...</span>
+            <li v-for="category in categoryList.slice(0,10)" :key="category.categoryId" @click="toBusinessList(category.categoryId)">
             <img :src="category.categoryCover" />
             <p>{{ category.categoryName }}</p>
             </li>
@@ -133,6 +134,12 @@ const loadCategory=()=>{
     categoryList.value = res.data.resultdata;
  });
  }
+
+ //加载所有的商家分类
+const toCategoryList=()=>{
+    router.push('/categoryList');
+}
+
  //根据商家分类编号 跳转至商家列表页面
 const toBusinessList = (id) =>{
     //需要使用路由跳转时 传递参数
@@ -228,6 +235,21 @@ init();
         font-size: 3.2vw; color:#79859E;
     }
 
+    .wrapper .category-ul span {
+        position: absolute;
+        right: 1.5vw;
+        top: -2vw;
+        background-color: #ffde09;
+        color: #fb8b06;
+        border: 0.3vw solid #444;
+        border-radius: 1vw;
+        padding: 0.5vw 2vw;
+        font-weight: 800;
+        box-shadow: 0.2vw 0.2vw 0.2vw rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        height: 5vw;
+        margin-top: 30%;
+    }
     /*横幅广告*/
     .wrapper .banner{
         width:95%; margin: 0 auto; height:29vw;
