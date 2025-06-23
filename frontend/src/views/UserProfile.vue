@@ -77,9 +77,6 @@ const toShowUserOrders = () => {
   // 跳转到用户订单页面
 };
 
-const toShowUserBusinesses = () =>{
-  //跳转到关注店铺界面
-};
 
 
 
@@ -157,10 +154,6 @@ const toShowUserBusinesses = () => {
   router.push('/userFavorites');
 };
 
-const toShowUserAddresses = () => {
-  // 跳转到地址管理页面
-  router.push('/address');
-};
 
 
 const toLogoutAccount = () => {
