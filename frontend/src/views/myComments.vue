@@ -2,26 +2,12 @@
     <div class='wrapper'>
         <header>
             <i class="fa fa-angle-left" @click="router.back()"></i>
-            <p>商家评论</p>
+            <p>我的评价</p>
         </header>
-        <div class="business-info">
-            <div class="business-logo">
-                <img :src="business.businessImg">
-            </div>
-            <div class="business-details">
-                <h2>{{ business.businessName }}</h2>
-                <p>{{ business.businessExplain }}</p>
-                <div class="business-stats">
-                    <span>评分: {{ business.score || '暂无' }}</span>
-                    <span>月售: {{ business.monthlySale || 0 }}</span>
-                    <span>配送: ¥{{ business.deliveryPrice }}</span>
-                </div>
-            </div>
-        </div>
 
         <div class="comments-section">
             <div class="comments-header">
-                <h3>用户评论</h3>
+                <h3>我的评价记录</h3>
                 <div class="filter-buttons">
                     <el-button :class="{ active: activeFilter === 'all' }" @click="filterComments('all')">全部</el-button>
                     <el-button :class="{ active: activeFilter === 'positive' }" @click="filterComments('positive')">好评</el-button>
@@ -31,13 +17,12 @@
 
             <div class="comments-list" v-if="filteredComments.length > 0">
                 <div v-for="comment in filteredComments" :key="comment.commentId" class="comment-item">
-                    <div class="user-info">
-                        <img :src="comment.userAvatar || defaultAvatar" class="user-avatar">
-                        <span class="user-name">{{ comment.userName || '匿名用户' }}</span>
-                        <span class="comment-time">{{ formatDate(comment.createTime) }}</span>
+                    <div class="business-info">
+                        <span class="business-name">{{ comment.businessName || '未知商家' }}</span>
                     </div>
                     <div class="rating">
                         <el-rate v-model="comment.score" disabled show-score text-color="#ff9900"></el-rate>
+                        <span class="comment-time">{{ formatDate(comment.createTime) }}</span>
                     </div>
                     <div class="comment-content">
                         <p>{{ comment.content }}</p>
@@ -50,7 +35,7 @@
                 </div>
             </div>
             <div v-else class="no-comments">
-                <el-empty description="暂无评论"></el-empty>
+                <el-empty description="暂无评价"></el-empty>
             </div>
         </div>
     </div>
@@ -58,25 +43,28 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { get } from '@/api'
 import { ElMessage } from 'element-plus'
+import { getSession } from '@/utils/storage'
 
 const router = useRouter()
-const route = useRoute()
 
-// 获取从BusinessInfo传递过来的商家信息
-const business = ref(route.query.business ? JSON.parse(route.query.business) : {})
+// 获取当前登录用户信息
+const account = getSession('account')
+if (!account) {
+    ElMessage.error('请先登录')
+    router.push('/login')
+}
 
 // 评论列表数据
 const comments = ref([])
 const activeFilter = ref('all')
-const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
 // 加载评论列表
 const loadComments = async () => {
     try {
-        const res = await get(`/comment/list/${business.value.businessId}`)
+        const res = await get(`/comment/list/user/${account.accountId}`)
         if (res.data && res.data.code === 20000) {
             comments.value = res.data.resultdata.map(comment => ({
                 ...comment,
@@ -84,17 +72,15 @@ const loadComments = async () => {
                 score: comment.rate,
                 content: comment.coText,
                 createTime: comment.created,
-                userAvatar: defaultAvatar,
-                userName: `用户${comment.accountId.slice(-4)}`,
                 orderItems: [] // 订单商品列表待实现
             })) || []
-            console.log('评论列表:', comments.value)
+            console.log('我的评价列表:', comments.value)
         } else {
-            ElMessage.error(res.data ? res.data.message : '加载评论失败')
+            ElMessage.error(res.data ? res.data.message : '加载评价失败')
         }
     } catch (error) {
-        console.error('加载评论请求异常:', error)
-        ElMessage.error('加载评论异常')
+        console.error('加载评价请求异常:', error)
+        ElMessage.error('加载评价异常')
     }
 }
 
@@ -123,12 +109,9 @@ const filteredComments = computed(() => {
 })
 
 onMounted(() => {
-    if (!business.value.businessId) {
-        ElMessage.error('商家信息不完整')
-        router.back()
-        return
+    if (account) {
+        loadComments()
     }
-    loadComments()
 })
 </script>
 
@@ -164,38 +147,6 @@ header .fa-angle-left {
     left: 4vw;
     font-size: 6vw;
     color: #596164;
-}
-
-.business-info {
-    background: #fff;
-    padding: 15px;
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.business-logo img {
-    width: 60px;
-    height: 60px;
-    border-radius: 5px;
-    margin-right: 15px;
-}
-
-.business-details h2 {
-    margin: 0 0 5px;
-    font-size: 18px;
-}
-
-.business-details p {
-    margin: 0 0 8px;
-    color: #666;
-    font-size: 14px;
-}
-
-.business-stats span {
-    margin-right: 15px;
-    color: #666;
-    font-size: 13px;
 }
 
 .comments-section {
@@ -234,31 +185,26 @@ header .fa-angle-left {
     border-bottom: none;
 }
 
-.user-info {
+.business-info {
+    margin-bottom: 10px;
+}
+
+.business-name {
+    font-weight: bold;
+    color: #333;
+    font-size: 16px;
+}
+
+.rating {
     display: flex;
     align-items: center;
     margin-bottom: 10px;
 }
 
-.user-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    margin-right: 10px;
-}
-
-.user-name {
-    font-weight: 500;
-    margin-right: 10px;
-}
-
 .comment-time {
+    margin-left: 10px;
     color: #999;
     font-size: 12px;
-}
-
-.rating {
-    margin-bottom: 10px;
 }
 
 .comment-content {

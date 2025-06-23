@@ -73,7 +73,7 @@ const toShowUserOrders = () => {
 
 const toShowUserReviews = () => {
   // 跳转到用户评价页面
-  console.log("跳转到用户评价页面");
+  router.push('/myComments');
 };
 
 const toChangePassword = () => {

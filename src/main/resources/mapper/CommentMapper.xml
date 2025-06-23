@@ -2,4 +2,23 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.soft.mapper.CommentMapper">
 
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.soft.entity.Comment">
+        <id column="co_id" property="coId" />
+        <result column="account_id" property="accountId" />
+        <result column="business_id" property="businessId" />
+        <result column="order_id" property="orderId" />
+        <result column="rate" property="rate" />
+        <result column="co_text" property="coText" />
+        <result column="co_img" property="coImg" />
+        <result column="created" property="created" />
+        <result column="updated" property="updated" />
+        <result column="statu" property="statu" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        co_id, account_id, business_id, order_id, rate, co_text, co_img, created, updated, statu
+    </sql>
+
 </mapper>

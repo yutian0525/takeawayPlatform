@@ -12,6 +12,7 @@ import UserCart from '@/views/UserCart.vue'
 import UserOrders from '@/views/UserOrders.vue'
 import AccountChange from '@/views/AccountChange.vue'
 import Comments from '@/views/comments.vue'
+import MyComments from '@/views/myComments.vue'
 
 const routes = [
   {
@@ -78,6 +79,11 @@ const routes = [
     path: '/comments',
     name: 'comments',
     component: Comments
+  },
+  {
+    path: '/myComments',
+    name: 'myComments',
+    component: MyComments
   }
 ]
 
