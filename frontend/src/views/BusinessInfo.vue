@@ -42,11 +42,11 @@
                         <!-- disabled 标签失败（不可用）-->
                         <div class="quantity-control">
                             <el-button @click="minus(item)" :disabled="item.quantity === 0">
-                                <minus />-
+                                <i class="el-icon-minus">-</i>
                             </el-button>
                             <span>{{ item.quantity }}</span>
                             <el-button @click="add(item)">
-                                <plus />+
+                                <i class="el-icon-plus">+</i>
                             </el-button>
                         </div>
                         <div>
