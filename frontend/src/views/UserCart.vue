@@ -119,7 +119,7 @@
                         businessId: businessId,
                         businessName: '', // 待填充
                         businessAddress: '', // 待填充
-                        minDeliveryPrice: 0, // 待填充
+                        starPrice: 0, // 待填充
                         deliveryPrice:0,
                         selected: true, // 默认全选
                         items: []
@@ -137,7 +137,7 @@
                     const businessEntry = groupedCartMap.get(id);
                     businessEntry.businessName = businessData.businessName;
                     businessEntry.businessAddress = businessData.businessAddress;
-                    businessEntry.minDeliveryPrice = businessData.starPrice; // 假设起送价是starPrice
+                    businessEntry.starPrice = businessData.starPrice; // 假设起送价是starPrice
                     businessEntry.deliveryPrice = businessData.deliveryPrice;
                 } else {
                     ElMessage.warning(`加载商家ID ${id} 信息失败`);
