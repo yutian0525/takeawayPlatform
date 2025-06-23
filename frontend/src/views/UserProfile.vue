@@ -82,9 +82,14 @@ const toShowUserBusinesses = () =>{
   //跳转到关注店铺界面
 };
 
-const toShowUserAddresses = () =>{
-  //跳转到用户地址界面
+
+
+const toShowUserAddresses = () => {
+  // console.log("111")
+  // 跳转到地址管理页
+  router.push('/address');
 };
+
 
 const toChangeAccount = () => {
   //跳转到修改信息的界面
