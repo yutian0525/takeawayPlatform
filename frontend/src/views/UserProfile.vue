@@ -140,6 +140,8 @@ const verifyPassword = (callback) => {
       if (res.data.code === 20000) {
         // account.password = value;
         // setSessionStorage('account',JSON.stringify(account));
+        setSessionStorage('account',res.data.resultdata);
+        console.log(res.data.data);
         callback();
       } 
       else {
@@ -191,6 +193,7 @@ const verifyPassword = (callback) => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: 10%;
 }
 
 .loggedin .user-info {

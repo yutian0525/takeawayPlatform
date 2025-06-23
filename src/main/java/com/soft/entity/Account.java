@@ -41,5 +41,13 @@ public class Account extends BaseEntity {
     @TableField("del_tag")
     private Integer delTag;
 
-
+    public Account(String accountId, String password, String accountName, Integer accountSex) {
+        this.accountId = accountId;
+        this.password = password;
+        this.accountName = accountName;
+        this.accountSex = accountSex;
+        this.accountImg = accountImg;
+        this.delTag = delTag;
+    }
+    public Account() {}
 }
