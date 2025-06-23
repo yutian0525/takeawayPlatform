@@ -18,4 +18,11 @@ public interface CommentService extends IService<Comment> {
      * @return 评论列表（包含商家信息）
      */
     List<Map<String, Object>> getCommentListWithBusiness(String accountId);
+    
+    /**
+     * 获取评论列表及关联的用户信息
+     * @param businessId 商家ID
+     * @return 评论列表（包含用户信息）
+     */
+    List<Map<String, Object>> getCommentListWithAccount(Long businessId);
 }

@@ -84,14 +84,14 @@ const loadComments = async () => {
             // console.log('评论列表1:', res.data.resultdata)
             comments.value = res.data.resultdata.map(comment => ({
                 ...comment,
-                commentId: comment.coId,
+                commentId: comment.co_id,
                 score: comment.rate,
-                content: comment.coText,
+                content: comment.co_text,
                 createTime: comment.created,
-                userAvatar: defaultAvatar,
-                userName: `用户${comment.accountId.slice(-4)}`,
+                userAvatar: comment.account_img || defaultAvatar,
+                userName: comment.account_name || `用户${comment.account_id.slice(-4)}`,
                 orderItems: [], // 订单商品列表待实现
-                goodsImg: comment.coImg,
+                goodsImg: comment.co_img,
             })) || []
             console.log('评论列表:', comments.value)
         } else {

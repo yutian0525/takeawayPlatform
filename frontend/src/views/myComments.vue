@@ -18,10 +18,15 @@
             <div class="comments-list" v-if="filteredComments.length > 0">
                 <div v-for="comment in filteredComments" :key="comment.commentId" class="comment-item">
                     <div class="business-info">
-                        <span class="business-name">{{ comment.business_name || '未知商家' }}</span>
-                        <div class="business-details">
-                            <span class="business-address">{{ comment.business_address }}</span>
-                            <span class="business-explain">{{ comment.business_explain }}</span>
+                        <div class="business-logo" v-if="comment.business_img">
+                            <img :src="comment.business_img" alt="商家图片">
+                        </div>
+                        <div class="business-text">
+                            <span class="business-name">{{ comment.business_name || '未知商家' }}</span>
+                            <div class="business-details">
+                                <span class="business-address">{{ comment.business_address }}</span>
+                                <span class="business-explain">{{ comment.business_explain }}</span>
+                            </div>
                         </div>
                     </div>
                     <div class="rating">
@@ -194,6 +199,23 @@ header .fa-angle-left {
 
 .business-info {
     margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+}
+
+.business-logo {
+    margin-right: 10px;
+}
+
+.business-logo img {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.business-text {
+    flex: 1;
 }
 
 .business-name {
