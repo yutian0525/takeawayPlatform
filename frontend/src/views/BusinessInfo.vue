@@ -62,7 +62,7 @@
     </div>
     <!-- 购物车按钮 -->
     <div class="cart-button" @click="openCartPopup">
-        <i class="fa fa-shopping-cart"></i>
+        <img src="../assets/cart.png" alt="Cart" class="cart-icon"> <!-- 替换为图片 -->
         <span class="cart-count" v-if="totalQuantityForCurrentBusiness > 0">{{ totalQuantityForCurrentBusiness }}</span>
     </div>
 
@@ -83,7 +83,7 @@
                 <p>总计: &#165;{{ totalCartAmount.toFixed(2) }}</p>
                 <button @click="goToConfirmOrder">去结算</button>
             </div>
-            <button class="close-popup-btn" @click="closeCartPopup">关闭</button>
+            <button class="close-popup-btn" @click="closeCartPopup">X</button>
         </div>
     </div>
 </template>
@@ -134,18 +134,18 @@ const loadBusinessInfo = () => {
 };
 
 // 根据商家编号加载商品列表
-const loadGoodsByBusinessId = () => {
+function loadGoodsByBusinessId() {
     let url = `/business/listByBusinessId/${businessId}`;
     get(url).then(res => {
         if (res.data && res.data.code === 20000) {
             let tempArray = res.data.resultdata;
             if (Array.isArray(tempArray)) {
                 for (let i = 0; i < tempArray.length; i++) {
-                    tempArray[i].quantity = 0;
+                    tempArray[i].quantity = 0; // 默认初始化为0
                     // 从购物车中查找当前商家的该商品数量，确保 cartItem 包含 businessId
                     const cartItem = cart.value.find(c => c.goodsId === tempArray[i].goodsId && c.businessId === business.value.businessId);
                     if (cartItem) {
-                        tempArray[i].quantity = cartItem.quantity;
+                        tempArray[i].quantity = cartItem.quantity; // 如果购物车有，则更新为购物车数量
                     }
                 }
                 goods.value = tempArray;
@@ -193,7 +193,7 @@ const add = async (item) => {
     // 同步更新 goods 列表中的商品数量，确保 UI 反映最新状态
     const goodsItemInList = goods.value.find(g => g.goodsId === item.goodsId);
     if (goodsItemInList) {
-        goodsItemInList.quantity = goodsItemInCart.quantity;
+        goodsItemInList.quantity = goodsItemInCart.quantity; // 同步更新页面显示数量
     }
 
     let apiEndpoint = '';
@@ -276,7 +276,7 @@ const minus = async (item) => {
     // 同步更新 goods 列表中的商品数量
     const goodsItemInList = goods.value.find(g => g.goodsId === item.goodsId);
     if (goodsItemInList) {
-        goodsItemInList.quantity = goodsItemInCart.quantity;
+        goodsItemInList.quantity = goodsItemInCart.quantity; // 同步更新页面显示数量
     }
 
     let apiEndpoint = '';
