@@ -114,6 +114,7 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         if (business != null) {
             order.setBusiness(business); // 设置完整的 Business 对象
             order.setBusinessName(business.getBusinessName()); // 也可以单独设置 businessName
+            // 假设 Business 实体有 businessImg 字段，无需额外设置，直接通过 order.getBusiness().getBusinessImg() 访问
         }
 
         // 填充订单明细
@@ -121,13 +122,14 @@ public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> impleme
         detailQueryWrapper.eq("order_id", orderId);
         List<Ordersdetailet> details = ordersdetailetService.list(detailQueryWrapper);
 
-        // 为每个订单明细填充商品名称和价格
+        // 为每个订单明细填充商品名称、价格和图片
         if (details != null && !details.isEmpty()) {
             details = details.stream().map(detail -> {
                 Goods goods = goodsService.getById(detail.getGoodsId());
                 if (goods != null) {
                     detail.setGoodsName(goods.getGoodsName());
                     detail.setGoodsPrice(goods.getGoodsPrice());
+                    detail.setGoodsImg(goods.getGoodsImg()); // 新增：设置商品图片
                 }
                 return detail;
             }).collect(Collectors.toList());

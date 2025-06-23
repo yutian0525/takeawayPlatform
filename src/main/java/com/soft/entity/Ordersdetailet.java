@@ -40,13 +40,18 @@ public class Ordersdetailet { // 更改：不再继承 BaseEntity
     @TableField(exist = false)
     private BigDecimal goodsPrice;
 
-    // 移除 created, updated, statu 字段，因为它们不在 sys_ordersdetailet 表中
-    // 如果您的数据库表 sys_ordersdetailet 确实有这些字段，请在此处手动添加它们
-    // 例如：
-    // @TableField("created")
-    // private LocalDateTime created;
-    // @TableField("updated")
-    // private LocalDateTime updated;
-    // @TableField("statu")
-    // private Integer statu;
+    /**
+     * 商品图片 (不映射到数据库)
+     */
+    @TableField(exist = false)
+    private String goodsImg; // 新增：商品图片字段
 }
+// 移除 created, updated, statu 字段，因为它们不在 sys_ordersdetailet 表中
+// 如果您的数据库表 sys_ordersdetailet 确实有这些字段，请在此处手动添加它们
+// 例如：
+// @TableField("created")
+// private LocalDateTime created;
+// @TableField("updated")
+// private LocalDateTime updated;
+// @TableField("statu")
+// private Integer statu;

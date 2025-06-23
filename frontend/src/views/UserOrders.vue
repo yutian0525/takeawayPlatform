@@ -19,7 +19,7 @@
 
         <!-- 订单列表 -->
         <div class="order-list">
-            <div class="order-item" v-for="order in filteredOrders" :key="order.orderId">
+            <div class="order-item" v-for="order in filteredOrders" :key="order.orderId" @click="goToOrderDetail(order.orderId)"> <!-- 新增：点击跳转到订单详情 -->
                 <div class="business-info">
                     <i class="fa fa-shopping-cart"></i>
                     <span class="business-name">{{ order.businessName }}</span>
@@ -28,12 +28,12 @@
                 </div>
                 <div class="order-details">
                     <div class="amount">交易金额: {{ order.amount }}元</div>
-                    <div class="date">交易日期: {{ order.created }}</div>
+                    <div class="date">交易日期: {{ formatDateTime(order.created) }} </div>
                 </div>
                 <div class="order-actions">
                     <!-- 新增删除订单按钮 -->
-                    <button class="delete-btn" @click="deleteOrder(order.orderId)">删除订单</button>
-                    <button class="review-btn" @click="goToReview(order.orderId)">去评价 ></button>
+                    <button class="delete-btn" @click.stop="deleteOrder(order.orderId)">删除订单</button> <!-- .stop 阻止事件冒泡到父级，避免同时触发 goToOrderDetail -->
+                    <button class="review-btn" @click.stop="goToReview(order.orderId)">去评价 ></button> <!-- .stop 阻止事件冒泡 -->
                 </div>
             </div>
         </div>
@@ -53,7 +53,12 @@ const router = useRouter()
 const searchText = ref('')
 const orders = ref([])
 const currentTab = ref('all') // 当前选中的标签，默认为'all'
-
+// 格式化日期时间
+const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return '';
+    const date = new Date(dateTimeString);
+    return date.toLocaleString(); // 根据本地时区格式化
+};
 // 计算属性：根据搜索文本和当前标签过滤订单
 const filteredOrders = computed(() => {
     let filtered = orders.value;
@@ -132,6 +137,11 @@ const deleteOrder = async (orderId) => {
 const goToReview = (orderId) => {
     router.push(`/review/${orderId}`) // 保持现有逻辑，跳转到 /review/订单ID 页面
 }
+
+// 新增：跳转到订单详情页面
+const goToOrderDetail = (orderId) => {
+    router.push({ path: '/orderDetail', query: { orderId: orderId } });
+};
 
 onMounted(() => {
     loadOrders()

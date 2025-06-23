@@ -10,6 +10,7 @@ import Address from '@/views/Address.vue'
 import Payment from '@/views/Payment.vue'
 import UserCart from '@/views/UserCart.vue'
 import UserOrders from '@/views/UserOrders.vue'
+import OrderDetail from '../views/OrderDetail.vue' // 新增
 
 
 const routes = [
@@ -67,6 +68,11 @@ const routes = [
     path: '/orderList',
     name: 'UserOrder',
     component: UserOrders
+  },
+  {
+    path: '/orderDetail', // 或者 /orderDetail/:orderId 如果您想用params
+    name: 'OrderDetail',
+    component: OrderDetail
   }
 ]
 
