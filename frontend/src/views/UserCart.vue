@@ -286,7 +286,7 @@
             return;
         }
         if (confirm('确定要清空购物车吗？')) {
-            if (!account) {
+            if (!account.value) { // 修复：使用 account.value
                 ElMessage.error('请先登录');
                 router.push('/login');
                 return;
@@ -299,7 +299,7 @@
                     removePromises.push(post("/cart/remove", {
                         goodsId: item.goods.goodsId,
                         businessId: business.businessId,
-                        accountId: account.accountId,
+                        accountId: account.value.accountId, // 修复：使用 account.value.accountId
                     }, true));
                 });
             });

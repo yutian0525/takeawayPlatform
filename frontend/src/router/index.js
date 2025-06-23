@@ -106,8 +106,8 @@ const routes = [
   {
     path: '/userFavorites',
     name: 'userFavorites',
-    component: UserFavorites
-    path: '/orderDetail', // 或者 /orderDetail/:orderId 如果您想用params
+    component: UserFavorites,
+    path: '/orderDetail', 
     name: 'OrderDetail',
     component: OrderDetail
   }

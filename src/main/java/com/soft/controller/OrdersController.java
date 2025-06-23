@@ -87,6 +87,30 @@ public class OrdersController extends BaseController {
     }
 
     /**
+     * 更新订单状态
+     * @param orders 包含 orderId 和 state 的订单对象
+     * @return
+     */
+    @PostMapping("/updateState")
+    public Result updateState(@RequestBody Orders orders) {
+        try {
+            // 假设 orders 对象中包含了 orderId 和 state
+            // 根据 orderId 获取现有订单
+            Orders existingOrder = ordersService.getById(orders.getOrderId());
+            if (existingOrder == null) {
+                return Result.fail("订单不存在");
+            }
+            // 更新订单状态
+            existingOrder.setState(orders.getState());
+            ordersService.updateById(existingOrder);
+            return Result.success("订单状态更新成功");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.fail("更新订单状态失败：" + e.getMessage());
+        }
+    }
+
+    /**
      * 删除订单
      * @param orderId
      * @return

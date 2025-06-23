@@ -11,7 +11,7 @@
             <div class="business-info">
                 <h3>{{ order.business.businessName }}</h3>
                 <p>{{ order.business.businessAddress }}</p>
-                <img :src="order.business.businessImg || '/path/to/default/business_image.png'" alt="Business Image" class="business-img"> <!-- 新增：商家图片 -->
+                <img :src="order.business.businessImg " alt="Business Image" class="business-img"> <!-- 新增：商家图片 -->
             </div>
 
             <!-- 订单明细部分 -->

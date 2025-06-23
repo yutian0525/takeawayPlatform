@@ -72,11 +72,18 @@ const filteredOrders = computed(() => {
 
     // 2. 根据订单状态标签过滤
     if (currentTab.value === 'paid') {
-        return filtered.filter(order => order.state === 1);
+        filtered = filtered.filter(order => order.state === 1);
     } else if (currentTab.value === 'pending') {
-        return filtered.filter(order => order.state === 0);
+        filtered = filtered.filter(order => order.state === 0);
     }
-    return filtered; // 'all' tab 或没有特定过滤条件时返回全部
+    
+    // 3. 按照时间从近到远排序
+    // 假设 order.created 是一个可以被 Date 对象解析的字符串
+    filtered.sort((a, b) => {
+        return new Date(b.created).getTime() - new Date(a.created).getTime();
+    });
+
+    return filtered;
 });
 
 // 切换标签的方法
