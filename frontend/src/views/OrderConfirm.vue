@@ -9,15 +9,14 @@
     <div class="order-info">
       <h5>订单配送至：</h5>
       <div class="order-info-address" @click="toAddress()">
-        <p>{{ deliveryAddress!=null?deliveryAddress.address:'请选择配送地址' }}</p>
-         <!-- <p>上海市静安区静安寺街道常德路195号</p> -->
+        <p>{{ deliveryAddress ? deliveryAddress.address : '请选择配送地址' }}</p>
         <i class="el-icon-arrow-right"></i>
-      </div>
-      <p v-if="deliveryAddress!=null">  
-          {{deliveryAddress.contactName }}
-          {{deliveryAddress.contactSex | fmtSex}} 
-          <em>{{deliveryAddress.contactTel}}</em>
-      </p> 
+    </div>
+    <p v-if="deliveryAddress">
+        {{ deliveryAddress.contactName }} 
+        {{ deliveryAddress.contactSex === 1 ? '先生' : '女士' }} 
+        <em>{{ deliveryAddress.contactTel }}</em>
+    </p> 
     </div>
 
 
@@ -58,47 +57,9 @@ import { getSession, setSession } from '@/utils/storage';
 
 const router = useRouter();
 const account = ref(getSession('account'));
-const orderDetails = ref(getSession('orderDetails') || []);
-const businessInfo = ref(getSession('businessInfo') || {});
-const totalAmount = ref(getSession('totalAmount') || '0.00');
 const deliveryAddress = ref(null);
 const business = ref({});
 const cart = ref([]);
-
-// 计算总价（包含配送费）
-const finalTotal = computed(() => {
-    const subtotal = parseFloat(totalAmount.value);
-    const delivery = parseFloat(businessInfo.value.deliveryPrice || 0);
-    return (subtotal + delivery).toFixed(2);
-});
-
-onMounted(async () => {
-    if (!account.value) {
-        ElMessage.error('请先登录');
-        router.push('/login');
-        return;
-    }
-
-    if (!orderDetails.value.length) {
-        ElMessage.error('订单数据不存在');
-        router.push('/cart');
-        console.log(orderDetails.value);
-        return;
-    }
-
-    // 获取默认收货地址
-    try {
-        const addressRes = await get(`/address/default/${account.value.accountId}`);
-        if (addressRes.data.code === 20000) {
-            deliveryAddress.value = addressRes.data.resultdata;
-            // 保存地址信息到 sessionStorage
-            setSession('deliveryAddress', deliveryAddress.value);
-        }
-    } catch (error) {
-        console.error('获取默认地址失败:', error);
-    }
-});
-
 
 // 计算总价（包含配送费）
 const totalPrice = computed(() => {
@@ -106,7 +67,9 @@ const totalPrice = computed(() => {
     for (const item of cart.value) {
         total += item.goodsPrice * item.quantity;
     }
-    total += business.value.deliveryPrice || 0;
+    if (business.value && business.value.deliveryPrice) {
+        total += business.value.deliveryPrice;
+    }
     return total.toFixed(2);
 });
 
@@ -120,30 +83,30 @@ const toPayment = async () => {
     try {
         // 创建订单
         const orderData = {
-            accountId: account.accountId,
+            accountId: account.value.accountId,
             businessId: business.value.businessId,
             orderTotal: totalPrice.value,
-            deliveryAddressId: deliveryAddress.value.id,
-            orderItems: cart.value.map(item => ({
+            daId: deliveryAddress.value.daId, // 注意：这里假设地址对象的ID字段是daId
+            state: 0, // 订单状态，0表示未支付
+            orderdetails: cart.value.map(item => ({
                 goodsId: item.goodsId,
-                quantity: item.quantity,
-                itemPrice: item.goodsPrice
+                quantity: item.quantity
             }))
         };
 
-        // 这里需要后端提供创建订单的接口
-        const res = await post('/order/create', orderData);
+        const res = await post('/orders/create', orderData, true);
         
         if (res.data.code === 20000) {
-            // 保存订单ID，用于支付页面使用
-            sessionStorage.setItem('orderId', res.data.resultdata);
-            router.push('/payment');
+            const orderId = res.data.resultdata;
+            ElMessage.success('订单创建成功！');
+            // 跳转到支付页面，并传递订单ID
+            router.push({ path: '/payment', query: { orderId: orderId } });
         } else {
             ElMessage.error(res.data.message || '创建订单失败');
         }
     } catch (error) {
         console.error('创建订单失败:', error);
-        ElMessage.error('创建订单失败，请重试');
+        ElMessage.error('创建订单异常，请重试');
     }
 };
 
@@ -162,28 +125,33 @@ onMounted(async () => {
     // 从 sessionStorage 获取购物车和商家信息
     const orderDetails = getSession('orderDetails');
     const businessInfo = getSession('businessInfo');
-    
-    console.log('获取到的订单数据:', orderDetails); // 调试用
-    console.log('获取到的商家信息:', businessInfo); // 调试用
 
-    if (!orderDetails || !businessInfo) {
-        ElMessage.error('订单数据不存在');
+    if (!orderDetails || orderDetails.length === 0 || !businessInfo) {
+        ElMessage.error('订单信息不完整，请返回购物车重新选择');
         router.push('/cart');
         return;
     }
 
-    // 设置购物车数据
     cart.value = orderDetails;
     business.value = businessInfo;
 
-    // 获取默认收货地址
-    try {
-        const addressRes = await get(`/address/default/${account.value.accountId}`);
-        if (addressRes.data.code === 20000) {
-            deliveryAddress.value = addressRes.data.resultdata;
+    // 优先从 sessionStorage 获取选择的地址
+    const selectedAddress = getSession('selectedAddress');
+    if (selectedAddress) {
+        deliveryAddress.value = selectedAddress;
+    } else {
+        // 否则，获取默认收货地址
+        try {
+            const addressRes = await get(`/deliveryaddress/default/${account.value.accountId}`, true);
+            if (addressRes.data.code === 20000 && addressRes.data.resultdata) {
+                deliveryAddress.value = addressRes.data.resultdata;
+            } else {
+                ElMessage.info('您还没有设置默认收货地址，请选择一个');
+            }
+        } catch (error) {
+            console.error('获取默认地址失败:', error);
+            ElMessage.error('获取收货地址失败');
         }
-    } catch (error) {
-        console.error('获取默认地址失败:', error);
     }
 });
 </script>

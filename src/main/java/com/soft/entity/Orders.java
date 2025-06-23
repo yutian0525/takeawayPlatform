@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("sys_orders")
@@ -35,22 +34,26 @@ public class Orders extends BaseEntity {
     private Long businessId;
 
     /**
-     * 订单总价
+     * 商家名称
      */
-    @TableField("order_total")
-    private BigDecimal orderTotal;
+    @TableField(exist = false)
+    private String businessName;
 
     /**
-     * 送货地址编号--sys_deliveryaddress表da_id
+     * 订单总金额
      */
-    @TableField("da_id")
-    private Integer daId;
+    @TableField("amount")
+    private BigDecimal amount;
 
     /**
-     * 订单状态（0：未支付； 1：已支付）
+     * 订单状态：1-已支付，0-待支付
      */
-    @TableField("state")
-    private Integer state;
+    @TableField("status")
+    private Integer status;
 
-
+    /**
+     * 订单备注
+     */
+    @TableField("note")
+    private String note;
 }
