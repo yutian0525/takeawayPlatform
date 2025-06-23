@@ -12,26 +12,29 @@
                 {{ order.business.businessName }}
                 <i class="fa fa-caret-down" @click="detailetShow"></i>
             </p>
-            <p>&#165;{{ order.orderTotal }}</p>
+            <p>&#165;{{ order.amount }}</p> <!-- 更改：从 orderTotal 改为 amount -->
         </div>
 
         <!-- 订单明细部分 -->
         <ul class="order-detailet" v-show="isShowDetailet">
-            <li v-for="item in order.list" :key="item.odId">
-                <p>{{ item.goods.goodsName }} x {{ item.quantity }}</p>
-                <p>&#165;{{ item.goods.goodsPrice * item.quantity }}</p>
+            <li v-for="item in order.orderdetails" :key="item.odId"> <!-- 更改：从 order.list 改为 order.orderdetails -->
+                <p>{{ item.goodsName }} x {{ item.quantity }}</p> <!-- 更改：从 item.goods.goodsName 改为 item.goodsName -->
+                <p>&#165;{{ item.goodsPrice * item.quantity }}</p> <!-- 更改：从 item.goods.goodsPrice 改为 item.goodsPrice -->
             </li>
             <li>
                 <p>配送费</p>
                 <p>&#165;{{ order.business.deliveryPrice }}</p>
             </li>
         </ul>
-
         <!-- 支付方式部分 -->
         <ul class="payment-type">
-            <li>
+            <li @click="selectPayment('alipay')">
                 <img src="../assets/alipay.png">
-                <i class="fa fa-check-circle"></i>
+                <i class="fa" :class="{'fa-check-circle': selectedPayment === 'alipay'}"></i>
+            </li>
+            <li @click="selectPayment('wechatpay')">
+                <img src="../assets/wechat.png"> <!-- 假设您有 wechatpay.png 图片 -->
+                <i class="fa" :class="{'fa-check-circle': selectedPayment === 'wechatpay'}"></i>
             </li>
         </ul>
         <div class="payment-button">
@@ -53,11 +56,17 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const router = useRouter();
 const route = useRoute();
 const orderId = route.query.orderId;
-const order = ref({ business: {} });
+// 初始化 order 对象，确保 business 和 orderdetails 存在，避免访问 undefined 属性
+const order = ref({ business: {}, orderdetails: [] }); // 确保 orderdetails 初始为数组
 const isShowDetailet = ref(false);
+const selectedPayment = ref('alipay'); // 新增：默认选择支付宝
 
 const detailetShow = () => {
     isShowDetailet.value = !isShowDetailet.value;
+};
+
+const selectPayment = (type) => {
+    selectedPayment.value = type;
 };
 
 onMounted(async () => {
@@ -65,6 +74,11 @@ onMounted(async () => {
         const res = await get(`/orders/getOrdersById/${orderId}`, {}, true);
         if (res.data.code === 20000) {
             order.value = res.data.resultdata;
+            // 新增：判断订单状态，如果已支付则提示并跳转
+            if (order.value.state === 1) {
+                ElMessage.warning('您已支付过此订单！');
+                router.replace('/userOrders'); // 使用 replace 避免回退到支付页
+            }
         } else {
             ElMessage.error('获取订单信息失败');
         }

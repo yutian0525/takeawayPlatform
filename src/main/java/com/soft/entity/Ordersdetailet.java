@@ -1,52 +1,52 @@
 package com.soft.entity;
 
-
-import com.soft.common.BaseEntity;
+// import com.soft.common.BaseEntity; // 移除：不再继承 BaseEntity
+import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+// import lombok.EqualsAndHashCode; // 移除：不再继承 BaseEntity，因此不需要 callSuper = true
 
-/**
- * <p>
- * 
- * </p>
- *
- * @author Byterain
- * @since 2025-06-22
- */
 @Data
-@EqualsAndHashCode(callSuper = true)
+// @EqualsAndHashCode(callSuper = true) // 移除此行
 @TableName("sys_ordersdetailet")
-public class Ordersdetailet extends BaseEntity {
+public class Ordersdetailet { // 更改：不再继承 BaseEntity
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L; // 保持此行，如果需要序列化
 
-    /**
-     * 订单明细编号
-     */
     @TableId(value = "od_id", type = IdType.AUTO)
     private Long odId;
 
-    /**
-     * 所属订单编号sys_orders表order_id
-     */
     @TableField("order_id")
     private Long orderId;
 
-    /**
-     * 食品编号--sys_goods表goods_id
-     */
     @TableField("goods_id")
-    private Integer goodsId;
+    private Long goodsId;
 
-    /**
-     * 数量
-     */
     @TableField("quantity")
     private Integer quantity;
 
+    /**
+     * 商品名称 (不映射到数据库)
+     */
+    @TableField(exist = false)
+    private String goodsName;
 
+    /**
+     * 商品价格 (不映射到数据库)
+     */
+    @TableField(exist = false)
+    private BigDecimal goodsPrice;
+
+    // 移除 created, updated, statu 字段，因为它们不在 sys_ordersdetailet 表中
+    // 如果您的数据库表 sys_ordersdetailet 确实有这些字段，请在此处手动添加它们
+    // 例如：
+    // @TableField("created")
+    // private LocalDateTime created;
+    // @TableField("updated")
+    // private LocalDateTime updated;
+    // @TableField("statu")
+    // private Integer statu;
 }

@@ -70,6 +70,7 @@ export default {
     position: fixed;
     left: 0;
     bottom: -0.1vw;
+    z-index: 1000;
     display: flex;
     justify-content: space-around;
     align-items: center;

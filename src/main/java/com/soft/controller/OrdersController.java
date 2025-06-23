@@ -41,13 +41,16 @@ public class OrdersController extends BaseController {
     }
 
     /**
-     * 根据ID获取订单信息
+     * 根据ID获取订单信息 (现在返回完整的订单详情)
      * @param orderId
      * @return
      */
     @GetMapping("/getOrdersById/{orderId}")
-    public Result getOrdersById(@PathVariable("orderId") Integer orderId) {
-        Orders orders = ordersService.getById(orderId);
+    public Result getOrdersById(@PathVariable("orderId") Long orderId) { // 更改：参数类型为 Long
+        Orders orders = ordersService.getOrderDetailForPayment(orderId); // 更改：调用新的服务方法
+        if (orders == null) {
+            return Result.fail("订单不存在");
+        }
         return Result.success(orders);
     }
 
@@ -58,8 +61,13 @@ public class OrdersController extends BaseController {
      */
     @PostMapping("/create")
     public Result create(@RequestBody Orders orders) {
-        ordersService.save(orders);
-        return Result.success(orders.getOrderId());
+        try {
+            ordersService.createOrderWithDetails(orders);
+            return Result.success(orders.getOrderId());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.fail("创建订单失败：" + e.getMessage());
+        }
     }
 
     /**
@@ -67,11 +75,34 @@ public class OrdersController extends BaseController {
      * @param orderId
      * @return
      */
-    @GetMapping("/pay/{orderId}")
+    @PostMapping("/pay/{orderId}") // 更改：将 @GetMapping 修改为 @PostMapping
     public Result pay(@PathVariable("orderId") Integer orderId) {
         Orders orders = ordersService.getById(orderId);
-        orders.setStatu(1);
+        if (orders == null) {
+            return Result.fail("订单不存在");
+        }
+        orders.setState(1); // 保持不变，因为 Orders 实体现在有自己的 state 字段
         ordersService.updateById(orders);
         return Result.success(1);
+    }
+
+    /**
+     * 删除订单
+     * @param orderId
+     * @return
+     */
+    @DeleteMapping("/{orderId}") // 新增：删除订单接口
+    public Result deleteOrder(@PathVariable("orderId") Long orderId) {
+        try {
+            boolean removed = ordersService.removeById(orderId);
+            if (removed) {
+                return Result.success("订单删除成功");
+            } else {
+                return Result.fail("订单删除失败，订单不存在或已被删除");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.fail("删除订单异常：" + e.getMessage());
+        }
     }
 }

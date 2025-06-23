@@ -85,7 +85,7 @@ const toPayment = async () => {
         const orderData = {
             accountId: account.value.accountId,
             businessId: business.value.businessId,
-            orderTotal: totalPrice.value,
+            // orderTotal: totalPrice.value, // REMOVED: 后端将根据明细计算总金额
             daId: deliveryAddress.value.daId, // 注意：这里假设地址对象的ID字段是daId
             state: 0, // 订单状态，0表示未支付
             orderdetails: cart.value.map(item => ({
