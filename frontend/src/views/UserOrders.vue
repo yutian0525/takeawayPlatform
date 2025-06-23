@@ -4,26 +4,23 @@
             <p>订单</p>
         </header>
 
-        <!-- 搜索框 -->
         <div class="search-box">
-            <input type="text" v-model="searchText" placeholder="请输入您想搜索的商家名称">
+            <input type="text" v-model="searchText" placeholder="搜索商家或商品名称">
             <i class="el-icon-search"></i>
         </div>
 
-        <!-- 订单状态标签 -->
         <div class="order-tabs">
             <div class="tab" :class="{ active: currentTab === 'all' }" @click="selectTab('all')">全部订单</div>
             <div class="tab" :class="{ active: currentTab === 'paid' }" @click="selectTab('paid')">已支付</div>
             <div class="tab" :class="{ active: currentTab === 'pending' }" @click="selectTab('pending')">待支付</div>
         </div>
 
-        <!-- 订单列表 -->
         <div class="order-list">
             <div class="order-item" v-for="order in filteredOrders" :key="order.orderId" @click="goToOrderDetail(order.orderId)"> <!-- 新增：点击跳转到订单详情 -->
                 <div class="business-info">
                     <i class="fa fa-shopping-cart"></i>
                     <span class="business-name">{{ order.businessName }}</span>
-                    <!-- 使用 order.state 来判断订单状态 -->
+                  
                     <span class="order-status">{{ order.state === 1 ? '已支付' : '待支付' }}</span>
                 </div>
                 <div class="order-details">
@@ -31,9 +28,8 @@
                     <div class="date">交易日期: {{ formatDateTime(order.created) }} </div>
                 </div>
                 <div class="order-actions">
-                    <!-- 新增删除订单按钮 -->
                    
-                    <button class="review-btn" @click.stop="goToReview(order.orderId)">去评价 ></button> <!-- .stop 阻止事件冒泡 -->
+                    <button class="review-btn" @click.stop="goToReview(order.orderId)" v-if="order.state === 1">去评价 ></button> <!-- .stop 阻止事件冒泡 -->
                 </div>
             </div>
         </div>
@@ -46,28 +42,36 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import Footer from '@/components/Footer.vue'
-import { get, del } from '@/api' // 导入 del 方法
-import { ElMessage, ElMessageBox } from 'element-plus' // 导入 ElMessageBox 用于确认弹窗
+import { get, del } from '@/api' 
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const searchText = ref('')
 const orders = ref([])
-const currentTab = ref('all') // 当前选中的标签，默认为'all'
-// 格式化日期时间
+const currentTab = ref('all') 
+
 const formatDateTime = (dateTimeString) => {
     if (!dateTimeString) return '';
     const date = new Date(dateTimeString);
-    return date.toLocaleString(); // 根据本地时区格式化
+    return date.toLocaleString(); 
 };
-// 计算属性：根据搜索文本和当前标签过滤订单
 const filteredOrders = computed(() => {
     let filtered = orders.value;
+    const searchLower = searchText.value.toLowerCase(); // 将搜索文本转为小写，方便不区分大小写搜索
 
     // 1. 根据搜索文本过滤
     if (searchText.value) {
-        filtered = filtered.filter(order =>
-            order.businessName.includes(searchText.value)
-        );
+        filtered = filtered.filter(order => {
+            // 检查商家名称是否包含搜索文本
+            const businessNameMatch = order.businessName.toLowerCase().includes(searchLower);
+
+            // 检查订单详情中的商品名称是否包含搜索文本
+            const goodsNameMatch = order.orderdetails && order.orderdetails.some(item =>
+                item.goodsName.toLowerCase().includes(searchLower)
+            );
+
+            return businessNameMatch || goodsNameMatch;
+        });
     }
 
     // 2. 根据订单状态标签过滤
@@ -169,7 +173,7 @@ header {
     background: linear-gradient(to right, #fff1eb, #ace0f9);
     color: #596164;
     font-size: 5vw;
-    position: fixed; /* 固定在顶部 */
+    position: fixed; 
     left: 0;
     top: 0;
     display: flex;
@@ -183,29 +187,37 @@ header p {
 }
 
 .search-box {
-    margin-top: 8vw; /* 为顶部固定导航栏留出空间 */
-  
+    margin-top: 12vw;
+    display: flex;
+    align-items: center; /* 垂直居中对齐 */
+    width: 90%;
+    margin-left: auto; /* 水平居中 */
+    margin-right: auto; /* 水平居中 */
     position: relative;
+    padding: 0 3vw; /* 增加容器内边距 */
+    box-sizing: border-box; /* 确保内边距包含在宽度内 */
 }
 
 .search-box input {
-    width: 100%;
+    flex-grow: 1; /* 让输入框占据可用空间 */
     height: 8vw;
-    border: none;
+    border: 1px solid #e0e0e0; /* 添加边框 */
     border-radius: 4vw;
-    padding: 0 4vw;
+    padding: 0 10vw 0 4vw; /* 增加右侧内边距，为图标留出空间 */
     font-size: 3.2vw;
     background-color: #fff;
-    box-shadow: 0 0.2vw 1vw rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0.2vw 1vw rgba(0, 0, 0, 0.05); /* 调整阴影 */
+    outline: none; /* 移除聚焦时的外边框 */
 }
 
 .search-box i {
     position: absolute;
-    right: 6vw;
+    right: 6vw; /* 调整图标位置 */
     top: 50%;
     transform: translateY(-50%);
     color: #999;
-    font-size: 4vw;
+    font-size: 4.5vw; /* 稍微增大图标 */
+    cursor: pointer; /* 添加手型光标 */
 }
 
 .order-tabs {

@@ -4,8 +4,6 @@
         <header>
             <p>在线支付</p>
         </header>
-
-        <!-- 订单信息部分 - 类似于 OrderDetail.vue 的样式 -->
         <main>
             <!-- 商家信息 -->
             <div class="business-info">
@@ -38,7 +36,6 @@
             </div>
         </main>
 
-        <!-- 支付方式部分 -->
         <ul class="payment-type">
             <li @click="selectPayment('alipay')">
                 <img src="../assets/alipay.png">
@@ -62,7 +59,7 @@
 import Footer from '../components/Footer.vue'
 import { ref, onMounted } from "vue"
 import { useRouter, useRoute } from "vue-router"
-import { get, post, put } from "@/api" // 确保导入 post 和 put
+import { get, post, put } from "@/api" 
 import { ElMessage } from 'element-plus'
 
 const router = useRouter();
@@ -70,7 +67,7 @@ const route = useRoute();
 const orderId = route.query.orderId;
 
 const order = ref({ business: {}, orderdetails: [] });
-const selectedPayment = ref('alipay'); // 默认选择支付宝
+const selectedPayment = ref('alipay'); 
 
 const selectPayment = (type) => {
     selectedPayment.value = type;
@@ -89,35 +86,30 @@ onMounted(async () => {
             }
             if (order.value.state === 1) {
                 ElMessage.warning('您已支付过此订单！');
-                router.replace('/orderList'); // 跳转到订单列表，而不是支付页
+                router.replace('/orderList'); 
             }
         } else {
             ElMessage.error('获取订单信息失败');
-            router.back(); // 获取失败则返回上一页
+            router.back(); 
         }
     } catch (error) {
         console.error('请求订单信息异常:', error);
         ElMessage.error('网络异常，请稍后重试');
-        router.back(); // 异常则返回上一页
+        router.back(); 
     }
 });
 
-// 修改后的确认支付函数：更新订单状态，清空购物车，并跳转到订单详情页
 const confirmAndGoToDetail = async () => {
     try {
-        // 1. 调用后端接口更新订单状态为已支付 (state = 1)
-        // 将 put 改为 post
         const updateOrderRes = await post('/orders/updateState', {
             orderId: orderId,
-            state: 1 // 设为已支付
-        }, true); // 假设需要认证
+            state: 1 
+        }, true);
 
         if (updateOrderRes.data.code !== 20000) {
             ElMessage.error(updateOrderRes.data.message || '更新订单状态失败！');
-            return; // 如果订单状态更新失败，则停止后续操作
+            return; 
         }
-
-        // 2. 删除购物车中对应的商品
         const account = JSON.parse(sessionStorage.getItem('account'));
         if (!account || !account.accountId) {
             ElMessage.error('无法获取用户信息，请重新登录。');
@@ -135,12 +127,8 @@ const confirmAndGoToDetail = async () => {
                 }, true));
             });
         }
-
-        // 并发执行所有购物车删除请求
         await Promise.all(removePromises);
-        ElMessage.success('购物车中相关商品已清除！');
-
-        // 3. 支付成功后跳转到订单详情页
+      
         ElMessage.success('支付成功！');
         router.push({ path: '/orderDetail', query: { orderId: orderId } });
 

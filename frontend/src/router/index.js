@@ -106,7 +106,9 @@ const routes = [
   {
     path: '/userFavorites',
     name: 'userFavorites',
-    component: UserFavorites,
+    component: UserFavorites
+  },
+  {
     path: '/orderDetail', 
     name: 'OrderDetail',
     component: OrderDetail
