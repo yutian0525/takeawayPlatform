@@ -110,6 +110,7 @@ const toCancelAccount = () => {
       }
     });
   sessionStorage.removeItem('account');
+  router.push('/userProfile');
   });
 };
 

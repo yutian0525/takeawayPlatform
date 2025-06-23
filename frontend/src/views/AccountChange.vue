@@ -15,12 +15,12 @@
         </el-form-item>
         <el-form-item label="性别" prop="accountSex">
             <el-radio-group v-model="account.accountSex">
-                <el-radio label="1">男</el-radio>
-                <el-radio label="0">女</el-radio>
+                <el-radio :value=1>男</el-radio>
+                <el-radio :value=0>女</el-radio>
             </el-radio-group>
         </el-form-item>
         <div class="button-update">
-            <button type="submit">确认修改</button>
+            <button type="submit" @click="updateInfo()">确认修改</button>
         </div>
         <div class="button-back">
             <button @click="toProfile()">返回主页</button>
@@ -40,7 +40,9 @@ import { getSessionStorage } from "@/common";
 
 const router = useRouter();
 // 用户登录信息
-const account = JSON.parse(sessionStorage.getItem("account"))
+let account= JSON.parse(sessionStorage.getItem("account"))
+
+console.log(account)
 
 const updateForm = ref(null);
 const rules = reactive({

@@ -112,4 +112,10 @@ public class AccountController extends BaseController {
         aService.removeById(accountId);
         return Result.success("<UNK>");
     }
+
+    @PostMapping("/update")
+    public Result update(@RequestBody Account account) {
+        aService.updateById(account);
+        return Result.success("修改成功");
+    }
 }
