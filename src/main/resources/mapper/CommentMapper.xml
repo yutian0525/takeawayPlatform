@@ -2,4 +2,51 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.soft.mapper.CommentMapper">
 
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.soft.entity.Comment">
+        <id column="co_id" property="coId" />
+        <result column="account_id" property="accountId" />
+        <result column="business_id" property="businessId" />
+        <result column="order_id" property="orderId" />
+        <result column="rate" property="rate" />
+        <result column="co_text" property="coText" />
+        <result column="co_img" property="coImg" />
+        <result column="created" property="created" />
+        <result column="updated" property="updated" />
+        <result column="statu" property="statu" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        co_id, account_id, business_id, order_id, rate, co_text, co_img, created, updated, statu
+    </sql>
+
+    <!-- 获取评论列表及关联的商家信息 -->
+    <select id="getCommentListWithBusiness" resultType="java.util.Map">
+        SELECT 
+            c.co_id, c.account_id, c.business_id, c.order_id, 
+            c.rate, c.co_text, c.co_img, c.created, c.updated, c.statu,
+            b.business_name, b.business_address, b.business_explain, b.business_img,
+            a.account_name, a.account_img
+        FROM sys_comment c
+        LEFT JOIN sys_business b ON c.business_id = b.business_id
+        LEFT JOIN sys_account a ON c.account_id = a.account_id
+        WHERE c.account_id = #{accountId}
+        AND c.statu = 1
+        ORDER BY c.created DESC
+    </select>
+    
+    <!-- 获取评论列表及关联的用户信息 -->
+    <select id="getCommentListWithAccount" resultType="java.util.Map">
+        SELECT 
+            c.co_id, c.account_id, c.business_id, c.order_id, 
+            c.rate, c.co_text, c.co_img, c.created, c.updated, c.statu,
+            a.account_name, a.account_img
+        FROM sys_comment c
+        LEFT JOIN sys_account a ON c.account_id = a.account_id
+        WHERE c.business_id = #{businessId}
+        AND c.statu = 1
+        ORDER BY c.created DESC
+    </select>
+
 </mapper>
