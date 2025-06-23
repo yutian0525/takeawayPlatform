@@ -16,6 +16,8 @@ import MyComments from '@/views/myComments.vue'
 import CategoryList from '@/views/CategoryList.vue'
 import WriteComment from '@/views/WriteComment.vue'
 import UserFavorites from '@/views/UserFavorites.vue'
+import OrderDetail from '../views/OrderDetail.vue' // 新增
+
 
 const routes = [
   {
@@ -105,6 +107,9 @@ const routes = [
     path: '/userFavorites',
     name: 'userFavorites',
     component: UserFavorites
+    path: '/orderDetail', // 或者 /orderDetail/:orderId 如果您想用params
+    name: 'OrderDetail',
+    component: OrderDetail
   }
 ]
 

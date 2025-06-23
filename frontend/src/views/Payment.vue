@@ -1,95 +1,108 @@
 <template>
     <div class="wrapper">
-  
-      <!-- header部分 -->
-      <header>
-        <p>在线支付</p>
-      </header>
-  
-      <!-- 订单信息部分 -->
-      <h3>订单信息：</h3>
-      <div class="order-info">
-        <p>
-          商家名称
- 
-          <el-icon v-if="!isShowDetailet" @click="detailetShow" ><CaretBottom /></el-icon>
-          <el-icon v-else @click="detailetShow" ><CaretTop /></el-icon>
-        </p>
-        <p>&#165; 10000</p>
-      </div>
-  
-      <ul class="order-detailet" v-show="isShowDetailet">
-        <li>
-          <img src="../assets/businessImg/sj01.png" alt="商家图片">
-        </li>
+        <!-- header部分 -->
+        <header>
+            <p>在线支付</p>
+        </header>
+
+        <!-- 订单信息部分 -->
+        <h3>订单信息：</h3>
+        <div class="order-info">
+            <p>
+                {{ order.business.businessName }}
+                <i class="fa fa-caret-down" @click="detailetShow"></i>
+            </p>
+            <p>&#165;{{ order.amount }}</p> <!-- 更改：从 orderTotal 改为 amount -->
+        </div>
+
         <!-- 订单明细部分 -->
-        <li>  
-          <p>商品名称 x 2 </p>
-          <p>&#165; 20.0</p>
-        </li>
-        <li>
-          <p>配送费</p>
-          <p>&#165; 5</p>
-        </li>
-      </ul>
-  
-      <!-- 支付方式部分 -->
-      <ul class="payment-type">
-        <li @click="alipay=true">
-          <img src="../assets/alipay.png">
-          <el-icon v-show="alipay" :size="26" style="color:#3cba92"><CircleCheckFilled /></el-icon>
-        </li>
-        <li @click="alipay=false"   >
-          <img src="../assets/wechat.png">
-          <el-icon v-show="!alipay" :size="26" style="color:#3cba92"><CircleCheckFilled /></el-icon>
-        </li>
-      </ul>
-      <div class="payment-button">
-        <button>确认支付</button>
-      </div>
-  
-      <!-- 底部菜单部分 -->
-      <Footer></Footer>
+        <ul class="order-detailet" v-show="isShowDetailet">
+            <li v-for="item in order.orderdetails" :key="item.odId"> <!-- 更改：从 order.list 改为 order.orderdetails -->
+                <p>{{ item.goodsName }} x {{ item.quantity }}</p> <!-- 更改：从 item.goods.goodsName 改为 item.goodsName -->
+                <p>&#165;{{ item.goodsPrice * item.quantity }}</p> <!-- 更改：从 item.goods.goodsPrice 改为 item.goodsPrice -->
+            </li>
+            <li>
+                <p>配送费</p>
+                <p>&#165;{{ order.business.deliveryPrice }}</p>
+            </li>
+        </ul>
+        <!-- 支付方式部分 -->
+        <ul class="payment-type">
+            <li @click="selectPayment('alipay')">
+                <img src="../assets/alipay.png">
+                <i class="fa" :class="{'fa-check-circle': selectedPayment === 'alipay'}"></i>
+            </li>
+            <li @click="selectPayment('wechatpay')">
+                <img src="../assets/wechat.png"> <!-- 假设您有 wechatpay.png 图片 -->
+                <i class="fa" :class="{'fa-check-circle': selectedPayment === 'wechatpay'}"></i>
+            </li>
+        </ul>
+        <div class="payment-button">
+            <button @click="toUserOrders">确认支付</button>
+        </div>
+
+        <!-- 底部菜单部分 -->
+        <Footer></Footer>
     </div>
-  </template>
+</template>
   
-  <script setup>import Footer from '../components/Footer.vue'
-  import {ref,reactive,computed,onMounted,onUnmounted} from "vue"
-  import {useRouter,useRoute} from "vue-router"
-  import { get, post } from "@/api";
-  import { ElMessage } from 'element-plus'
-  
-  //创建路由对象
-  const router = useRouter();
-  const route = useRoute();
+  <script setup>
+import Footer from '../components/Footer.vue'
+import { ref, reactive, onMounted, onUnmounted } from "vue"
+import { useRouter, useRoute } from "vue-router"
+import { get, post } from "@/api"
+import { ElMessage, ElMessageBox } from 'element-plus'
 
-  const isShowDetailet = ref(false);
-  const alipay = ref(true);
-  const detailetShow =()=>{
+const router = useRouter();
+const route = useRoute();
+const orderId = route.query.orderId;
+// 初始化 order 对象，确保 business 和 orderdetails 存在，避免访问 undefined 属性
+const order = ref({ business: {}, orderdetails: [] }); // 确保 orderdetails 初始为数组
+const isShowDetailet = ref(false);
+const selectedPayment = ref('alipay'); // 新增：默认选择支付宝
+
+const detailetShow = () => {
     isShowDetailet.value = !isShowDetailet.value;
-  }
+};
 
-  
-  const init = ()=>{
+const selectPayment = (type) => {
+    selectedPayment.value = type;
+};
 
-  }
-  init();
+onMounted(async () => {
+    try {
+        const res = await get(`/orders/getOrdersById/${orderId}`, {}, true);
+        if (res.data.code === 20000) {
+            order.value = res.data.resultdata;
+            // 新增：判断订单状态，如果已支付则提示并跳转
+            if (order.value.state === 1) {
+                ElMessage.warning('您已支付过此订单！');
+                router.replace('/userOrders'); // 使用 replace 避免回退到支付页
+            }
+        } else {
+            ElMessage.error('获取订单信息失败');
+        }
+    } catch (error) {
+        console.error('请求订单信息异常:', error);
+        ElMessage.error('网络异常，请稍后重试');
+    }
+});
 
-  onMounted(() => {
-      //项目购物车 一但提交，生成订单，就不能再返回上一页 订单组件见面。
-      history.pushState(null,null,document.URL);
-      //pushState 事件能够监控到history对象变化
-      window.onpopstate=()=>{
-        this.$router.push({path:'/'});
-      }
-  });
-
-  // 销毁
-  onUnmounted(() => {
-    //当前组件销毁的钩子函数
-    window.onpopstate = null;
-  });
-  </script>
+const toUserOrders = async () => {
+    try {
+        const res = await post(`/orders/pay/${orderId}`, {}, true);
+        if (res.data.code === 20000) {
+            ElMessage.success('支付成功！');
+            router.push('/userOrders');
+        } else {
+            ElMessage.error(res.data.message || '支付失败');
+        }
+    } catch (error) {
+        console.error('支付请求异常:', error);
+        ElMessage.error('支付异常，请稍后重试');
+    }
+};
+</script>
   
   <style scoped>
     /****************** 总容器 ******************/
