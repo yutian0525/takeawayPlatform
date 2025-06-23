@@ -47,7 +47,9 @@
 import Footer from '@/components/Footer.vue';
 import { ref } from 'vue';
 import router from '@/router';
-import { getSessionStorage } from '@/common';
+import { getSessionStorage,setSessionStorage } from '@/common';
+import { ElMessageBox, ElMessage } from 'element-plus';
+import { get } from "@/api/index.js";
 
 // 用户登录信息
 const account = JSON.parse(sessionStorage.getItem("account"))
@@ -66,25 +68,89 @@ const toRegister = () => {
   router.push('/register');
 };
 
-const toShowUserOrders = () => {
-  // 跳转到用户订单页面
-  console.log("跳转到用户订单页面");
-};
-
 const toShowUserReviews = () => {
   // 跳转到用户评价页面
   console.log("跳转到用户评价页面");
 };
 
-const toChangePassword = () => {
-  // 跳转到修改密码页面
-  console.log("跳转到修改密码页面");
+const toShowUserOrders = () => {
+  // 跳转到用户订单页面
+  console.log("跳转到用户订单页面");
+};
+
+const toShowUserBusinesses = () =>{
+  //跳转到关注店铺界面
+};
+
+const toShowUserAddresses = () =>{
+  //跳转到用户地址界面
+};
+
+const toChangeAccount = () => {
+  //跳转到修改信息的界面
+  verifyPassword(() => {
+    router.push('/accountChange');
+  });
 };
 
 const toSwitchAccount = () => {
-  // 跳转到切换账号页面
-  console.log("跳转到切换账号页面");
+  router.push('/login');
 };
+
+const toCancelAccount = () => {
+  verifyPassword(() => {
+  //注销账号
+  const url = `/account/cancel/${account.accountId}`;
+  get(url).then(res => {
+      if (res.data.code === 20000) {
+        ElMessage.success('账号已注销');
+      } 
+      else {
+        ElMessage.error(res.data.message || '账号注销失败');
+      }
+    });
+  sessionStorage.removeItem('account');
+  });
+};
+
+const toLogoutAccount = () => {
+  //退出当前账号
+  sessionStorage.removeItem('account');
+  router.push('/userProfile');
+};
+
+
+const verifyPassword = (callback) => {
+  ElMessageBox.prompt(
+    '请输入原密码进行验证',
+    '密码验证',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      showCancelButton: true,
+      showInput: true,
+      inputValidator: (val) => val.trim().length > 0,
+      inputErrorMessage: '密码不能为空'
+    }
+  )
+  .then(({ value }) => {
+    const url = `/account/checkPassword/${account.accountId}/${value}`;
+    get(url).then(res => {
+      if (res.data.code === 20000) {
+        // account.password = value;
+        // setSessionStorage('account',JSON.stringify(account));
+        callback();
+      } 
+      else {
+        ElMessage.error("密码不正确");
+      }
+    });
+  })
+  .catch(() => {
+    ElMessage.info('取消验证');
+  });
+};
+
 </script>
 <style scoped>
 .wrapper {
@@ -175,7 +241,7 @@ const toSwitchAccount = () => {
 
 .loggedin .Actions button:last-child {
   background-color: #fdfcfb;
-  border: 0.3vw solid #e2d1c3;
+  border: 0.3vw solid #e2c6c3;
   color: #5f72bd;
 }
 
@@ -207,26 +273,17 @@ const toSwitchAccount = () => {
 }
 
 /* 未登录状态显示 */
-.actions {
-  width: 100%;
-  padding: 30vw 4vw 4vw 4vw;
+.button-login {
+  width: 40vmax;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  padding: 4vw;
 }
 
-.actions .button-login,
-.actions .button-register {
-  width: 100%;
-  margin-bottom: 4vw;
-}
-
-.actions .button-login button,
-.actions .button-register button {
+.button-login button {
   width: 100%;
   height: 10vw;
   font-size: 3.8vw;
+  background-color: #3cba92;
   border: none;
   border-radius: 1.5vw;
   color: #efefef;
@@ -234,22 +291,21 @@ const toSwitchAccount = () => {
   letter-spacing: 2vw;
 }
 
-.actions .button-login button {
-  background-color: #3cba92;
+.button-register {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4vw;
 }
 
-.actions .button-register button {
+.button-register button {
+  width: 100%;
+  height: 10vw;
+  font-size: 3.8vw;
   background-color: #fdfcfb;
   border: 0.3vw solid #e2d1c3;
+  border-radius: 1.5vw;
   color: #5f72bd;
-}
-
-/* 底部 */
-Footer {
-  width: 100%;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  z-index: 1000;
+  outline: none;
+  letter-spacing: 2vw;
 }
 </style>

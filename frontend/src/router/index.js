@@ -73,6 +73,11 @@ const routes = [
     path: '/accountChange',
     name: 'AccountChange',
     component: AccountChange
+  },
+  {
+    path: '/userProfile',
+    name: 'UserProfile',
+    component: UserProfile
   }
 ]
 

@@ -123,6 +123,9 @@ const register =  () =>{
  router.push('/register');
  }
 
+ const toLogin = ()=>{
+ router.push('/login');
+ }
 
  </script>
 

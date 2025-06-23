@@ -1,14 +1,14 @@
 <template>
-<div class="wrapper">
+  <div class="wrapper">
     <header>
-        <p>信息修改</p>
+      <p>信息修改</p>
     </header>
     <el-form ref="updateForm" :model="account" label-width="80px" class="form-box" :rules="rules" @submit.prevent>
         <el-form-item label="账户" prop="accountId">
-            <el-input v-model="account.accountId" placeholder="账户不可修改" disabled></el-input>
+            <el-input v-model="account.accountId" :placeholder="account.accountId" disabled/>
         </el-form-item>
-        <el-form-item label="密码验证" prop="password">
-            <el-input v-model="account.password" type="password" show-password placeholder="请输入密码进行验证"/>
+        <el-form-item label="密码" prop="password">
+            <el-input v-model="account.password" type="password" show-password placeholder="请输入密码"/>
         </el-form-item>
         <el-form-item label="昵称" prop="accountName">
             <el-input v-model="account.accountName" placeholder="请输入新昵称"/>
@@ -20,36 +20,32 @@
             </el-radio-group>
         </el-form-item>
         <div class="button-update">
-            <button @click="updateInfo()">确认修改</button>
+            <button type="submit">确认修改</button>
         </div>
         <div class="button-back">
             <button @click="toProfile()">返回主页</button>
         </div>
     </el-form>
     <Footer></Footer>
-</div>
+  </div>
 </template>
 
 <script setup>
 import Footer from '@/components/Footer.vue';
 import { ElMessage } from 'element-plus';
-import { ref, reactive } from "vue";
-import { get, post } from "@/api/index.js";
+import { ref, reactive, onMounted } from "vue";
+import { post } from "@/api/index.js";
 import { useRouter } from "vue-router";
 import { getSessionStorage } from "@/common";
 
 const router = useRouter();
-const account = reactive({
-    accountId: '',
-    password: '',
-    accountName: '',
-    accountSex: ''
-});
+// 用户登录信息
+const account = JSON.parse(sessionStorage.getItem("account"))
 
 const updateForm = ref(null);
 const rules = reactive({
     password: [
-        { required: true, message: '请输入密码进行验证', trigger: 'blur' }
+        { required: true, message: '密码不能为空', trigger: 'blur' }
     ],
     accountName: [
         { required: true, message: '请输入新昵称', trigger: 'blur' }
@@ -58,54 +54,29 @@ const rules = reactive({
         { required: true, message: '请选择性别', trigger: 'change' }
     ]
 });
-
-// 从SessionStorage获取用户信息
-const userInfo = getSessionStorage("account");
-if (userInfo) {
-    account.accountId = userInfo.accountId;
-    account.accountName = userInfo.accountName;
-    account.accountSex = userInfo.accountSex;
-}
-
-const checkPassword = () => {
-    const checkUrl = `/account/checkPassword?accountId=${account.accountId}&password=${account.password}`;
-    get(checkUrl).then(res => {
+const updateInfo = () => {
+  updateForm.value.validate((valid, fields) => {
+    if (valid) {
+      const updateUrl = `/account/update`;
+      post(updateUrl, account).then(res => {
         if (res.data.code === 20000) {
-            updateForm.value.validate("accountName", (valid) => {
-                if (valid) {
-                    updateInfo();
-                }
-            });
+            ElMessage.success('信息修改成功');
+            router.push('/profile');
         } else {
             ElMessage.error(res.data.message);
         }
-    });
+      });
+    } else {
+      console.log('error submit!', fields);
+      return false;
+    }
+  });
 };
 
-const updateInfo = () => {
-    updateForm.value.validate((valid, fields) => {
-        if (valid) {
-            const updateUrl = `/account/update`;
-            post(updateUrl, account).then(res => {
-                if (res.data.code === 20000) {
-                    ElMessage.success('信息修改成功');
-                    router.push('/login');
-                } else {
-                    ElMessage.error(res.data.message);
-                }
-            });
-        } else {
-            console.log('error submit!', fields);
-            return false;
-        }
-    });
-};
-
-const toLogin = () => {
-    router.push('/login');
+const toProfile = () => {
+  router.push('/profile');
 };
 </script>
-
 <style scoped>
 .wrapper header {
     width: 100%;

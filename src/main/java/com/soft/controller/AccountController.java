@@ -96,10 +96,20 @@ public class AccountController extends BaseController {
         }
 
         // 比较数据库中的哈希值和新哈希值
-        if (account.getPassword().equals(newValue)) {
+        if (account.getPassword().equals(newValue) || account.getPassword().equals(value)) {
             return Result.success("密码验证成功");
         } else {
             return Result.fail("密码验证失败");
         }
+    }
+
+    @GetMapping("/cancel/{accountId}")
+    public Result cancel(@PathVariable String accountId) {
+        Account account = aService.getById(accountId);
+        if (account == null) {
+            return Result.fail("<UNK>");
+        }
+        aService.removeById(accountId);
+        return Result.success("<UNK>");
     }
 }
