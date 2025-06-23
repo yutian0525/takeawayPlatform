@@ -48,6 +48,7 @@ import Footer from '@/components/Footer.vue';
 import { ref } from 'vue';
 import router from '@/router';
 import { getSessionStorage } from '@/common';
+import { ElMessage } from 'element-plus';
 
 // 用户登录信息
 const account = JSON.parse(sessionStorage.getItem("account"))
@@ -84,6 +85,33 @@ const toChangePassword = () => {
 const toSwitchAccount = () => {
   // 跳转到切换账号页面
   console.log("跳转到切换账号页面");
+};
+
+const toShowUserBusinesses = () => {
+  // 跳转到店铺关注页面
+  router.push('/userFavorites');
+};
+
+const toShowUserAddresses = () => {
+  // 跳转到地址管理页面
+  router.push('/address');
+};
+
+const toChangeAccount = () => {
+  // 跳转到修改信息页面
+  router.push('/accountChange');
+};
+
+const toLogoutAccount = () => {
+  // 退出账号
+  sessionStorage.removeItem('account');
+  ElMessage.success('退出成功');
+  isLogin.value = false;
+};
+
+const toCancelAccount = () => {
+  // 注销账号功能
+  console.log("注销账号功能待实现");
 };
 </script>
 <style scoped>
