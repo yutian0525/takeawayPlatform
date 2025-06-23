@@ -17,6 +17,7 @@ import CategoryList from '@/views/CategoryList.vue'
 import WriteComment from '@/views/WriteComment.vue'
 import UserFavorites from '@/views/UserFavorites.vue'
 import OrderDetail from '../views/OrderDetail.vue' // 新增
+import Review from '../views/Review.vue' // 添加评价组件
 
 
 const routes = [
@@ -108,10 +109,14 @@ const routes = [
     name: 'userFavorites',
     component: UserFavorites
   },
-  {
-    path: '/orderDetail', 
+  {    path: '/orderDetail', 
     name: 'OrderDetail',
     component: OrderDetail
+  },
+  {
+    path: '/review/:orderId',
+    name: 'review',
+    component: Review
   }
 ]
 
