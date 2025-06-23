@@ -17,7 +17,7 @@
             <div class="search-top" ref="fixedBox">
                 <div class="search-box">
                     <i class="search_icon" aria-hidden="true" />
-                    <input type="text" placeholder="搜索商家名称、商品名称" />
+                    <input type="text" placeholder="搜索商家名称、商品名称" v-model="searchQuery" @keyup.enter="loadSuggestion(searchQuery)"/>
                 </div>
             </div>
         </div>
@@ -121,6 +121,12 @@ const account = JSON.parse(sessionStorage.getItem("account"))
 const isLogin = ref(!!account);
 const categoryList = ref([]);
 const businessList = ref([]);
+
+//输出搜索结果
+const loadSuggestion = (searchQuery) =>{
+    router.push({path:'/searchList',query:{searchQuery:searchQuery}})
+}
+
 
 //加载页面的商家数据
 const loadBusiness = ()=>{

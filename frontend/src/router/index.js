@@ -14,6 +14,8 @@ import AccountChange from '@/views/AccountChange.vue'
 import Comments from '@/views/comments.vue'
 import MyComments from '@/views/myComments.vue'
 import CategoryList from '@/views/CategoryList.vue'
+import SearchList from '@/views/SearchList.vue'
+import { componentSizeMap } from 'element-plus'
 
 const routes = [
   {
@@ -94,6 +96,11 @@ const routes = [
     path: '/categoryList',
     name: 'categoryList',
     component: CategoryList
+  },
+  {
+    path: '/searchList',
+    name: 'searchList',
+    component: SearchList
   }
 ]
 
