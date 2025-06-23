@@ -75,7 +75,6 @@ const toShowUserReviews = () => {
 
 const toShowUserOrders = () => {
   // 跳转到用户订单页面
-  console.log("跳转到用户订单页面");
 };
 
 const toShowUserBusinesses = () =>{
@@ -110,14 +109,14 @@ const toCancelAccount = () => {
       }
     });
   sessionStorage.removeItem('account');
-  router.push('/userProfile');
+  location.reload()
   });
 };
 
 const toLogoutAccount = () => {
   //退出当前账号
   sessionStorage.removeItem('account');
-  router.push('/userProfile');
+  location.reload()
 };
 
 
