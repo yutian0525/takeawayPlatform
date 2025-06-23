@@ -21,4 +21,17 @@
         co_id, account_id, business_id, order_id, rate, co_text, co_img, created, updated, statu
     </sql>
 
+    <!-- 获取评论列表及关联的商家信息 -->
+    <select id="getCommentListWithBusiness" resultType="java.util.Map">
+        SELECT 
+            c.co_id, c.account_id, c.business_id, c.order_id, 
+            c.rate, c.co_text, c.co_img, c.created, c.updated, c.statu,
+            b.business_name, b.business_address, b.business_explain
+        FROM sys_comment c
+        LEFT JOIN sys_business b ON c.business_id = b.business_id
+        WHERE c.account_id = #{accountId}
+        AND c.statu = 1
+        ORDER BY c.created DESC
+    </select>
+
 </mapper>

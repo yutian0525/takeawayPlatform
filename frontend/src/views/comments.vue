@@ -46,6 +46,9 @@
                         <span class="item" v-for="item in comment.orderItems" :key="item.goodsId">
                             {{ item.goodsName }}
                         </span>
+                        <div v-if="comment.goodsImg" class="goods-image-container">
+                            <img :src="comment.goodsImg" alt="商品图片" class="goods-image" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -78,6 +81,7 @@ const loadComments = async () => {
     try {
         const res = await get(`/comment/list/${business.value.businessId}`)
         if (res.data && res.data.code === 20000) {
+            // console.log('评论列表1:', res.data.resultdata)
             comments.value = res.data.resultdata.map(comment => ({
                 ...comment,
                 commentId: comment.coId,
@@ -86,7 +90,8 @@ const loadComments = async () => {
                 createTime: comment.created,
                 userAvatar: defaultAvatar,
                 userName: `用户${comment.accountId.slice(-4)}`,
-                orderItems: [] // 订单商品列表待实现
+                orderItems: [], // 订单商品列表待实现
+                goodsImg: comment.coImg,
             })) || []
             console.log('评论列表:', comments.value)
         } else {
@@ -278,6 +283,17 @@ header .fa-angle-left {
     border-radius: 4px;
     font-size: 12px;
     color: #666;
+}
+
+.goods-image-container {
+    margin-top: 10px;
+}
+
+.goods-image {
+    max-width: 100px;
+    height: auto;
+    border-radius: 4px;
+    display: block;
 }
 
 .no-comments {

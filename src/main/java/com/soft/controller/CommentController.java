@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 评论控制器
@@ -43,12 +44,7 @@ public class CommentController extends BaseController {
      */
     @GetMapping("/list/user/{accountId}")
     public Result listByAccountId(@PathVariable String accountId) {
-        QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("account_id", accountId)
-                   .eq("statu", 1)  // 只查询未删除的评论
-                   .orderByDesc("created");  // 按创建时间降序排序
-
-        List<Comment> comments = commentService.list(queryWrapper);
+        List<Map<String, Object>> comments = commentService.getCommentListWithBusiness(accountId);
         return Result.success(comments);
     }
 }

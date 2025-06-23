@@ -18,7 +18,11 @@
             <div class="comments-list" v-if="filteredComments.length > 0">
                 <div v-for="comment in filteredComments" :key="comment.commentId" class="comment-item">
                     <div class="business-info">
-                        <span class="business-name">{{ comment.businessName || '未知商家' }}</span>
+                        <span class="business-name">{{ comment.business_name || '未知商家' }}</span>
+                        <div class="business-details">
+                            <span class="business-address">{{ comment.business_address }}</span>
+                            <span class="business-explain">{{ comment.business_explain }}</span>
+                        </div>
                     </div>
                     <div class="rating">
                         <el-rate v-model="comment.score" disabled show-score text-color="#ff9900"></el-rate>
@@ -26,6 +30,9 @@
                     </div>
                     <div class="comment-content">
                         <p>{{ comment.content }}</p>
+                        <div v-if="comment.co_img" class="comment-image-container">
+                            <img :src="comment.co_img" alt="评论图片" class="comment-image" />
+                        </div>
                     </div>
                     <div class="order-items" v-if="comment.orderItems">
                         <span class="item" v-for="item in comment.orderItems" :key="item.goodsId">
@@ -68,9 +75,9 @@ const loadComments = async () => {
         if (res.data && res.data.code === 20000) {
             comments.value = res.data.resultdata.map(comment => ({
                 ...comment,
-                commentId: comment.coId,
+                commentId: comment.co_id,
                 score: comment.rate,
-                content: comment.coText,
+                content: comment.co_text,
                 createTime: comment.created,
                 orderItems: [] // 订单商品列表待实现
             })) || []
@@ -193,6 +200,24 @@ header .fa-angle-left {
     font-weight: bold;
     color: #333;
     font-size: 16px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.business-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: #666;
+}
+
+.business-address {
+    color: #666;
+}
+
+.business-explain {
+    color: #999;
 }
 
 .rating {
@@ -210,6 +235,17 @@ header .fa-angle-left {
 .comment-content {
     margin-bottom: 10px;
     line-height: 1.5;
+}
+
+.comment-image-container {
+    margin-top: 10px;
+}
+
+.comment-image {
+    max-width: 20vw;
+    height: auto;
+    border-radius: 4px;
+    display: block;
 }
 
 .order-items {
