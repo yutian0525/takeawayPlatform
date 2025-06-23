@@ -77,13 +77,6 @@ const toShowUserOrders = () => {
   // 跳转到用户订单页面
 };
 
-const toShowUserBusinesses = () =>{
-  //跳转到关注店铺界面
-};
-
-const toShowUserAddresses = () =>{
-  //跳转到用户地址界面
-};
 
 const toChangeAccount = () => {
   //跳转到修改信息的界面
@@ -111,12 +104,6 @@ const toCancelAccount = () => {
   sessionStorage.removeItem('account');
   location.reload()
   });
-};
-
-const toLogoutAccount = () => {
-  //退出当前账号
-  sessionStorage.removeItem('account');
-  location.reload()
 };
 
 
@@ -163,10 +150,6 @@ const toShowUserAddresses = () => {
   router.push('/address');
 };
 
-const toChangeAccount = () => {
-  // 跳转到修改信息页面
-  router.push('/accountChange');
-};
 
 const toLogoutAccount = () => {
   // 退出账号
@@ -175,10 +158,6 @@ const toLogoutAccount = () => {
   isLogin.value = false;
 };
 
-const toCancelAccount = () => {
-  // 注销账号功能
-  console.log("注销账号功能待实现");
-};
 </script>
 <style scoped>
 .wrapper {
