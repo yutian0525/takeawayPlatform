@@ -76,6 +76,20 @@ const comments = ref([])
 const activeFilter = ref('all')
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
+// 计算平均评分
+const calculateAverageScore = (commentsList) => {
+    if (!commentsList || commentsList.length === 0) return 0;
+    
+    // 计算所有评分的总和
+    const totalScore = commentsList.reduce((sum, comment) => {
+        return sum + (comment.score || 0);
+    }, 0);
+    
+    // 计算平均分并保留一位小数
+    const averageScore = totalScore / commentsList.length;
+    return parseFloat(averageScore.toFixed(1));
+};
+
 // 加载评论列表
 const loadComments = async () => {
     try {
@@ -94,6 +108,12 @@ const loadComments = async () => {
                 goodsImg: comment.co_img,
             })) || []
             console.log('评论列表:', comments.value)
+            
+            // 计算并更新商家评分
+            if (comments.value.length > 0) {
+                business.value.score = calculateAverageScore(comments.value);
+                console.log('更新商家评分:', business.value.score);
+            }
         } else {
             ElMessage.error(res.data ? res.data.message : '加载评论失败')
         }

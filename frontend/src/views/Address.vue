@@ -7,8 +7,8 @@
 
         <ul class="addresslist">
             <template v-if="addressList.length > 0">
-                <li v-for="(address, index) in addressList" :key="address.id">
-                    <div class="address-item">
+                <li v-for="(address, index) in addressList" :key="address.id" @click="selectAddress(address)">
+                    <div class="address-item" @click="selectAddress(address)">
                         <div class="user-info">
                             <span class="avatar">{{ address.contactName.charAt(0) }}</span>
                             <span class="name">{{ address.contactName }}</span>
@@ -108,6 +108,17 @@ const editAddress = (address) => {
 // 添加新地址
 const addNewAddress = () => {
     router.push('/editAddress');
+};
+
+// 选择地址
+const selectAddress = (address) => {
+    // 如果是从确认订单页面跳转来的，选择地址后返回
+    const fromPage = sessionStorage.getItem('fromPage');
+    console.log(address);
+    if (1) {
+        sessionStorage.setItem('selectedAddress', JSON.stringify(address));
+        router.back();
+    }
 };
 
 onMounted(() => {

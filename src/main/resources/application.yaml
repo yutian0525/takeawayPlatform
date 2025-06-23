@@ -1,14 +1,23 @@
 server:
   port: 9000
-  servlet:
-    context-path: /
+
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/system?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8
+    url: jdbc:mysql://localhost:3306/system?useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8
     username: root
-    password: K1234J5678
-    
-logging:
-  level:
-    com.baomidou.mybatisplus: DEBUG
+    password: 1234abcd
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+file:
+  upload:
+    path: D:/workspace/takeawayPlatform/upload/
+    url: http://localhost:9000/upload/
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true

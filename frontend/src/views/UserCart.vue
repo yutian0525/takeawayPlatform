@@ -29,7 +29,7 @@
                         </li>
                     </ul>
                     <div class="delivery-info">
-                        <p>起送 <span class="min-delivery">{{ business.minDeliveryPrice }}</span> 元</p>
+                        <p>起送 <span class="min-delivery">{{ business.starPrice }}</span> 元</p>
                         <p>当前 <span class="current-total">{{ calculateBusinessTotal(business) }}</span> 元</p>
                     </div>
                 </div>
@@ -119,7 +119,8 @@
                         businessId: businessId,
                         businessName: '', // 待填充
                         businessAddress: '', // 待填充
-                        minDeliveryPrice: 0, // 待填充
+                        starPrice: 0, // 待填充
+                        deliveryPrice:0,
                         selected: true, // 默认全选
                         items: []
                     });
@@ -136,7 +137,8 @@
                     const businessEntry = groupedCartMap.get(id);
                     businessEntry.businessName = businessData.businessName;
                     businessEntry.businessAddress = businessData.businessAddress;
-                    businessEntry.minDeliveryPrice = businessData.starPrice; // 假设起送价是starPrice
+                    businessEntry.starPrice = businessData.starPrice; // 假设起送价是starPrice
+                    businessEntry.deliveryPrice = businessData.deliveryPrice;
                 } else {
                     ElMessage.warning(`加载商家ID ${id} 信息失败`);
                 }
@@ -284,7 +286,7 @@
             return;
         }
         if (confirm('确定要清空购物车吗？')) {
-            if (!account) {
+            if (!account.value) { // 修复：使用 account.value
                 ElMessage.error('请先登录');
                 router.push('/login');
                 return;
@@ -297,7 +299,7 @@
                     removePromises.push(post("/cart/remove", {
                         goodsId: item.goods.goodsId,
                         businessId: business.businessId,
-                        accountId: account.accountId,
+                        accountId: account.value.accountId, // 修复：使用 account.value.accountId
                     }, true));
                 });
             });
@@ -359,7 +361,8 @@
                 businessId: selectedBusiness.businessId,
                 businessName: selectedBusiness.businessName,
                 businessAddress: selectedBusiness.businessAddress,
-                deliveryPrice: selectedBusiness.minDeliveryPrice
+                starPrice: selectedBusiness.starPrice, //起送费
+                deliveryPrice: selectedBusiness.deliveryPrice //配送费
             };
 
             // 保存到 sessionStorage

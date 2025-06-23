@@ -75,7 +75,6 @@ const toShowUserReviews = () => {
 
 const toShowUserOrders = () => {
   // 跳转到用户订单页面
-  console.log("跳转到用户订单页面");
 };
 
 const toShowUserBusinesses = () =>{
@@ -115,14 +114,8 @@ const toCancelAccount = () => {
       }
     });
   sessionStorage.removeItem('account');
-  router.push('/userProfile');
+  location.reload()
   });
-};
-
-const toLogoutAccount = () => {
-  //退出当前账号
-  sessionStorage.removeItem('account');
-  router.push('/userProfile');
 };
 
 
@@ -145,6 +138,8 @@ const verifyPassword = (callback) => {
       if (res.data.code === 20000) {
         // account.password = value;
         // setSessionStorage('account',JSON.stringify(account));
+        setSessionStorage('account',res.data.resultdata);
+        console.log(res.data.data);
         callback();
       } 
       else {
@@ -155,6 +150,24 @@ const verifyPassword = (callback) => {
   .catch(() => {
     ElMessage.info('取消验证');
   });
+};
+
+const toShowUserBusinesses = () => {
+  // 跳转到店铺关注页面
+  router.push('/userFavorites');
+};
+
+const toShowUserAddresses = () => {
+  // 跳转到地址管理页面
+  router.push('/address');
+};
+
+
+const toLogoutAccount = () => {
+  // 退出账号
+  sessionStorage.removeItem('account');
+  ElMessage.success('退出成功');
+  isLogin.value = false;
 };
 
 </script>
@@ -196,6 +209,7 @@ const verifyPassword = (callback) => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: 10%;
 }
 
 .loggedin .user-info {

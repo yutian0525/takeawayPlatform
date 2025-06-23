@@ -86,7 +86,7 @@ public class AccountController extends BaseController {
     }
 
     @GetMapping("/checkPassword/{accountId}/{value}")
-    public Result checkPassword(@PathVariable String accountId,@PathVariable String value){
+    public Result checkPassword(@PathVariable String accountId, @PathVariable String value) {
         String newValue = MD5Utils.md5(value);
         Account account = aService.getById(accountId);
 
@@ -96,8 +96,15 @@ public class AccountController extends BaseController {
         }
 
         // 比较数据库中的哈希值和新哈希值
-        if (account.getPassword().equals(newValue) || account.getPassword().equals(value)) {
-            return Result.success("密码验证成功");
+        if (account.getPassword().equals(newValue)) {
+            // 返回密码，直接返回前端传入的明文密码
+            Account account1 = new Account(
+                    account.getAccountId(),
+                    value, // 返回前端传入的明文密码
+                    account.getAccountName(),
+                    account.getAccountSex()
+            );
+            return Result.success(20000, "密码验证成功", account1);
         } else {
             return Result.fail("密码验证失败");
         }
@@ -115,7 +122,12 @@ public class AccountController extends BaseController {
 
     @PostMapping("/update")
     public Result update(@RequestBody Account account) {
-        aService.updateById(account);
-        return Result.success("修改成功");
+        Account account1 = aService.getById(account.getAccountId());
+        account1.setPassword(MD5Utils.md5(account.getPassword()));
+        account1.setAccountName(account.getAccountName());
+        account1.setAccountSex(account.getAccountSex());
+        account1.setUpdated(LocalDateTime.now());
+        aService.updateById(account1);
+        return Result.success(account1);
     }
 }

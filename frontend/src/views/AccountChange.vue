@@ -13,10 +13,10 @@
         <el-form-item label="昵称" prop="accountName">
             <el-input v-model="account.accountName" placeholder="请输入新昵称"/>
         </el-form-item>
-        <el-form-item label="性别" :prop="accountSex">
+        <el-form-item label="性别" prop="accountSex">
             <el-radio-group v-model="account.accountSex">
-                <el-radio :value=1>男</el-radio>
-                <el-radio :value=0>女</el-radio>
+                <el-radio :value="1">男</el-radio>
+                <el-radio :value="0">女</el-radio>
             </el-radio-group>
         </el-form-item>
         <div class="button-update">
@@ -36,11 +36,11 @@ import { ElMessage } from 'element-plus';
 import { ref, reactive, onMounted } from "vue";
 import { post } from "@/api/index.js";
 import { useRouter } from "vue-router";
-import { getSessionStorage } from "@/common";
+import { getSessionStorage,setSessionStorage } from "@/common";
 
 const router = useRouter();
 // 用户登录信息
-let account= JSON.parse(sessionStorage.getItem("account"))
+let account=  reactive(JSON.parse(sessionStorage.getItem("account")));
 
 console.log(account)
 
@@ -60,10 +60,11 @@ const updateInfo = () => {
   updateForm.value.validate((valid, fields) => {
     if (valid) {
       const updateUrl = `/account/update`;
-      post(updateUrl, account).then(res => {
+      post(updateUrl, account, true).then(res => {
         if (res.data.code === 20000) {
             ElMessage.success('信息修改成功');
-            router.push('/profile');
+            setSessionStorage('account',res.data.resultdata);
+            router.push('/userProfile');
         } else {
             ElMessage.error(res.data.message);
         }

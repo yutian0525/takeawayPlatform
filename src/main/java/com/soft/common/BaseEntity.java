@@ -15,6 +15,6 @@ public class BaseEntity {
      */
     @TableField("updated")
     private LocalDateTime updated;
-    @TableField("statu")
-    private Integer statu;
+    @TableField("statu") // 更改：字段名和数据库映射改回 statu
+    private Integer statu; // 更改：字段名从 state 改回 statu
 }
