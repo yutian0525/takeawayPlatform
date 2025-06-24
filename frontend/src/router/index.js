@@ -20,6 +20,7 @@ import WriteComment from '@/views/WriteComment.vue'
 import UserFavorites from '@/views/UserFavorites.vue'
 import OrderDetail from '../views/OrderDetail.vue' // 新增
 import Review from '../views/Review.vue' // 添加评价组件
+import EditComment from '@/views/EditComment.vue' // 添加评论编辑组件
 
 
 const routes = [
@@ -125,6 +126,11 @@ const routes = [
     path: '/review/:orderId',
     name: 'review',
     component: Review
+  },
+  {
+    path: '/editComment/:commentId',
+    name: 'editComment',
+    component: EditComment
   }
 ]
 

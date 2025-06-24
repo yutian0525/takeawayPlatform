@@ -431,10 +431,11 @@ header {
 
 .top-right {
     position: absolute;
-    top: 10px;
+    top: 30px;
     right: 10px;
     display: flex;
     align-items: center;
+
 }
 
 .AllComment {

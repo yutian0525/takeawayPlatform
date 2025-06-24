@@ -44,6 +44,10 @@
                             {{ item.goodsName }}
                         </span>
                     </div>
+                    <div class="comment-actions">
+                        <el-button type="primary" size="small" @click="editComment(comment)">修改</el-button>
+                        <el-button type="danger" size="small" @click="deleteComment(comment)">删除</el-button>
+                    </div>
                 </div>
             </div>
             <div v-else class="no-comments">
@@ -56,8 +60,8 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { get } from '@/api'
-import { ElMessage } from 'element-plus'
+import { get, post } from '@/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { getSession } from '@/utils/storage'
 
 const router = useRouter()
@@ -119,6 +123,36 @@ const filteredComments = computed(() => {
             return comments.value
     }
 })
+
+// 编辑评论 - 跳转到编辑页面
+const editComment = (comment) => {
+    router.push(`/editComment/${comment.commentId}`)
+}
+
+// 删除评论
+const deleteComment = async (comment) => {
+    try {
+        await ElMessageBox.confirm('确定要删除这条评价吗？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+        })
+        
+        const res = await post(`/comment/delete/${comment.commentId}`)
+        if (res.data && res.data.code === 20000) {
+            ElMessage.success('评价删除成功')
+            // 重新加载评论列表
+            loadComments()
+        } else {
+            ElMessage.error(res.data ? res.data.message : '删除评价失败')
+        }
+    } catch (error) {
+        if (error !== 'cancel') {
+            console.error('删除评价请求异常:', error)
+            ElMessage.error('删除评价失败')
+        }
+    }
+}
 
 onMounted(() => {
     if (account) {
@@ -287,5 +321,12 @@ header .fa-angle-left {
 .no-comments {
     text-align: center;
     padding: 30px 0;
+}
+
+.comment-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
 }
 </style>
