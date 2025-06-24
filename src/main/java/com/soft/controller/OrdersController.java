@@ -110,23 +110,4 @@ public class OrdersController extends BaseController {
         }
     }
 
-    /**
-     * 删除订单
-     * @param orderId
-     * @return
-     */
-    @DeleteMapping("/{orderId}") // 新增：删除订单接口
-    public Result deleteOrder(@PathVariable("orderId") Long orderId) {
-        try {
-            boolean removed = ordersService.removeById(orderId);
-            if (removed) {
-                return Result.success("订单删除成功");
-            } else {
-                return Result.fail("订单删除失败，订单不存在或已被删除");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return Result.fail("删除订单异常：" + e.getMessage());
-        }
-    }
 }

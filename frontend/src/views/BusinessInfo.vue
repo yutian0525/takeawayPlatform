@@ -114,23 +114,21 @@ const cart = ref(JSON.parse(sessionStorage.getItem('cart')) || []);
 // 购物车弹窗显示状态
 const showCartPopup = ref(false);
 
-// 加载商家详情
-const loadBusinessInfo = () => {
-    let url = `/business/info/${businessId}`;
-    get(url).then(res => {
+// 加载商家详情，并在成功后加载商品
+const loadBusinessInfo = async () => {
+    try {
+        const res = await get(`/business/info/${businessId}`);
         if (res.data && res.data.code === 20000) {
             business.value = res.data.resultdata;
-            console.log(business.value);
+            // 商家信息加载成功后，再加载商品列表
+            loadGoodsByBusinessId();
         } else {
-            ElMessage({
-                message: res.data ? res.data.message : '加载商家信息失败',
-                type: 'error',
-            });
+            ElMessage.error(res.data?.message || '加载商家信息失败');
         }
-    }).catch(error => {
+    } catch (error) {
         console.error('加载商家信息请求异常:', error);
         ElMessage.error('加载商家信息异常');
-    });
+    }
 };
 
 // 根据商家编号加载商品列表
@@ -403,7 +401,6 @@ const toComments = () => {
 
 onMounted(() => {
     loadBusinessInfo();
-    loadGoodsByBusinessId();
 });
 </script>
 
