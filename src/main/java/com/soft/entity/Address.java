@@ -15,7 +15,7 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("delivery_address") // 假设数据库表名为 delivery_address
+@TableName("sys_deliveryaddress") // 假设数据库表名为 delivery_address
 public class Address extends BaseEntity {
 
     private static final long serialVersionUID = 1L;

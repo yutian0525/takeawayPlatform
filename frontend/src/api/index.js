@@ -17,14 +17,13 @@ export function get(url, params){ // get方法现在可以接收params参数
 // HTTP协议 Get和 Post区别
 //常用post方式请求，封装成一个post().  post传递参数是在请求体； 请求报文(行、头、体)
 export function post(url,params,isJSON){
-    let headers = {
-        'Content-Type': 'application/json'
-    }
+    let headers = {};
 
-    //isJSON true表示传递参数是json格式,false表示传递参数是 参数形式(qs)
-    if(!isJSON){
-        //参数形式传递
-        params = qs.stringify(params);  //将json转化为 参数形式
+    if(isJSON){
+        headers['Content-Type'] = 'application/json';
+        params = JSON.stringify(params);
+    } else {
+        params = qs.stringify(params);
         headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=utf-8';
     }
     return  axiosInstance.post(url,params,{ headers: headers }); // 将headers作为第三个参数传递

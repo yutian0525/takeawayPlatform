@@ -21,6 +21,7 @@ import UserFavorites from '@/views/UserFavorites.vue'
 import OrderDetail from '../views/OrderDetail.vue' // 新增
 import Review from '../views/Review.vue' // 添加评价组件
 import EditComment from '@/views/EditComment.vue' // 添加评论编辑组件
+import EditAddress from '@/views/EditAddress.vue' // 添加地址编辑组件
 
 
 const routes = [
@@ -53,6 +54,11 @@ const routes = [
     path: '/businessInfo',
     name: 'businessInfo',
     component: BusinessInfo
+  },
+  {
+    path: '/editAddress',
+    name: 'editAddress',
+    component: EditAddress
   },
   {
     path: '/orderConfirm',

@@ -54,7 +54,7 @@ public class AddressController extends BaseController {
         // 将 contactSexStr 转换为 contactSex
         if ("1".equals(address.getContactSexStr())) {
             address.setContactSex(1); // 男
-        } else if ("0".equals(address.getContactSexStr())) {
+        } else if ("2".equals(address.getContactSexStr())) {
             address.setContactSex(2); // 女
         }
 
@@ -70,12 +70,12 @@ public class AddressController extends BaseController {
      */
     @PostMapping("/update")
     public Result update(@RequestBody Address address) {
-        log.info("正在更新地址 ID: {}", address.getId());
+        // log.info("正在更新地址 ID: {}", address.getId());
 
         // 将 contactSexStr 转换为 contactSex
         if ("1".equals(address.getContactSexStr())) {
             address.setContactSex(1); // 男
-        } else if ("0".equals(address.getContactSexStr())) {
+        } else if ("2".equals(address.getContactSexStr())) {
             address.setContactSex(2); // 女
         }
 

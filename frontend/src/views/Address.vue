@@ -255,19 +255,20 @@ const deleteAddress = async (id) => {
 const editAddress = (address) => {
     // 将地址信息存储到 sessionStorage
     sessionStorage.setItem('editAddress', JSON.stringify(address));
-    router.push('/EditAddress');
+    router.push('/editAddress');
 };
 
 // 添加新地址
 const addNewAddress = () => {
-    router.push('/EditAddress');
+    sessionStorage.setItem('editAddress', "");
+    router.push('/editAddress');
 };
 
 // 选择地址
 const selectAddress = (address) => {
     // 如果是从确认订单页面跳转来的，选择地址后返回
     sessionStorage.setItem('selectedAddress', JSON.stringify(address));
-    router.back();
+    router.back();  
 };
 
 onMounted(() => {
