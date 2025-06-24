@@ -40,6 +40,159 @@
     </div>
 </template>
 
+<style scoped>
+.wrapper {
+    width: 100%;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+    padding-bottom: 60px;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    background-color: #ffc107;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    z-index: 100;
+}
+
+header i {
+    font-size: 24px;
+    color: #333;
+}
+
+header p {
+    flex: 1;
+    text-align: center;
+    font-size: 18px;
+    color: #333;
+    margin: 0;
+}
+
+.addresslist {
+    margin-top: 54px;
+    padding: 10px;
+}
+
+.address-item {
+    background: #fff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.avatar {
+    width: 24px;
+    height: 24px;
+    background-color: #4caf50;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.name {
+    font-size: 16px;
+    font-weight: 500;
+    margin-right: 10px;
+}
+
+.tel {
+    color: #666;
+    margin-right: 10px;
+}
+
+.gender {
+    color: #666;
+}
+
+.address-info {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 8px;
+}
+
+.label {
+    background-color: #ffc107;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-right: 8px;
+}
+
+.content {
+    flex: 1;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    gap: 15px;
+}
+
+.actions .el-icon {
+    font-size: 18px;
+    color: #666;
+    cursor: pointer;
+}
+
+.actions .edit {
+    color: #2196f3;
+}
+
+.actions .delete {
+    color: #f44336;
+}
+
+.add-address {
+    position: fixed;
+    bottom: 60px;
+    left: 15px;
+    right: 15px;
+    height: 44px;
+    background-color: #ffc107;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.add-address i {
+    margin-right: 8px;
+    font-size: 20px;
+}
+
+.none {
+    text-align: center;
+    color: #999;
+    padding: 30px 0;
+}
+</style>
+
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -63,9 +216,8 @@ const loadAddressList = async () => {
 
     try {
         const res = await get(`/deliveryaddress/list/${account.value.accountId}`);
-        console.log('接口返回的数据:', res.data); // 添加调试信息
         if (res.data.code === 20000) {
-            addressList.value = res.data.resultdata || []; // 防止未定义
+            addressList.value = res.data.resultdata;
         } else {
             ElMessage.error('加载地址列表失败');
         }
@@ -101,6 +253,7 @@ const deleteAddress = async (id) => {
 
 // 编辑地址
 const editAddress = (address) => {
+    // 将地址信息存储到 sessionStorage
     sessionStorage.setItem('editAddress', JSON.stringify(address));
     router.push('/editAddress');
 };
@@ -122,14 +275,7 @@ const selectAddress = (address) => {
 };
 
 onMounted(() => {
-    console.log('组件 mounted');
-    console.log('account:', account.value);
-    if (account.value) {
-        console.log('开始加载地址列表...');
-        loadAddressList();
-    } else {
-        ElMessage.error('请先登录');
-        router.push('/login');
-    }
+    loadAddressList();
 });
 </script>
+  
