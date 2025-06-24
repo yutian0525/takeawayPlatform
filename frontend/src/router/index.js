@@ -16,6 +16,11 @@ import MyComments from '@/views/myComments.vue'
 import CategoryList from '@/views/CategoryList.vue'
 import SearchList from '@/views/SearchList.vue'
 import { componentSizeMap } from 'element-plus'
+import WriteComment from '@/views/WriteComment.vue'
+import UserFavorites from '@/views/UserFavorites.vue'
+import OrderDetail from '../views/OrderDetail.vue' // 新增
+import Review from '../views/Review.vue' // 添加评价组件
+
 
 const routes = [
   {
@@ -101,6 +106,25 @@ const routes = [
     path: '/searchList',
     name: 'searchList',
     component: SearchList
+  },
+  {
+    path: '/writeComment',
+    name: 'writeComment',
+    component: WriteComment
+  },
+  {
+    path: '/userFavorites',
+    name: 'userFavorites',
+    component: UserFavorites
+  },
+  {    path: '/orderDetail', 
+    name: 'OrderDetail',
+    component: OrderDetail
+  },
+  {
+    path: '/review/:orderId',
+    name: 'review',
+    component: Review
   }
 ]
 

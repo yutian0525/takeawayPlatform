@@ -60,6 +60,32 @@
             </ul>
         </div>
     </div>
+    <!-- 购物车按钮 -->
+    <div class="cart-button" @click="openCartPopup">
+        <img src="../assets/cart.png" alt="Cart" class="cart-icon"> <!-- 替换为图片 -->
+        <span class="cart-count" v-if="totalQuantityForCurrentBusiness > 0">{{ totalQuantityForCurrentBusiness }}</span>
+    </div>
+
+    <!-- 购物车弹窗 -->
+    <div class="cart-popup-overlay" v-if="showCartPopup" @click.self="closeCartPopup">
+        <div class="cart-popup-content">
+            <h3>购物车</h3>
+            <ul class="cart-items-list">
+                <li v-for="item in currentBusinessCartItems" :key="item.goodsId" class="cart-item">
+                    <img :src="item.goodsImg" alt="Goods Image">
+                    <div class="item-details">
+                        <p class="item-name">{{ item.goodsName }} x {{ item.quantity }}</p>
+                        <p class="item-price">&#165;{{ (item.goodsPrice * item.quantity).toFixed(2) }}</p>
+                    </div>
+                </li>
+            </ul>
+            <div class="cart-summary">
+                <p>总计: &#165;{{ totalCartAmount.toFixed(2) }}</p>
+                <button @click="goToConfirmOrder">去结算</button>
+            </div>
+            <button class="close-popup-btn" @click="closeCartPopup">X</button>
+        </div>
+    </div>
 </template>
 
 <script setup>
@@ -67,8 +93,9 @@ import Footer from '../components/Footer.vue'
 import { ref, onMounted, computed } from "vue"
 import { get, post } from '@/api';
 import { useRouter, useRoute } from "vue-router"
-import { Plus, Minus } from '@element-plus/icons-vue';
+import { Plus, Minus, ShoppingCart } from '@element-plus/icons-vue'; // 引入 ShoppingCart 图标
 import { ElMessage } from 'element-plus';
+import { setSession } from '@/utils/storage'; // 引入 setSession
 
 const router = useRouter();
 const route = useRoute();
@@ -83,6 +110,9 @@ const account = JSON.parse(sessionStorage.getItem("account"));
 // 页面显示商品列表对象
 const goods = ref([]);
 const cart = ref(JSON.parse(sessionStorage.getItem('cart')) || []);
+
+// 购物车弹窗显示状态
+const showCartPopup = ref(false);
 
 // 加载商家详情
 const loadBusinessInfo = () => {
@@ -104,17 +134,18 @@ const loadBusinessInfo = () => {
 };
 
 // 根据商家编号加载商品列表
-const loadGoodsByBusinessId = () => {
+function loadGoodsByBusinessId() {
     let url = `/business/listByBusinessId/${businessId}`;
     get(url).then(res => {
         if (res.data && res.data.code === 20000) {
             let tempArray = res.data.resultdata;
             if (Array.isArray(tempArray)) {
                 for (let i = 0; i < tempArray.length; i++) {
-                    tempArray[i].quantity = 0;
-                    const cartItem = cart.value.find(c => c.goodsId === tempArray[i].goodsId);
+                    tempArray[i].quantity = 0; // 默认初始化为0
+                    // 从购物车中查找当前商家的该商品数量，确保 cartItem 包含 businessId
+                    const cartItem = cart.value.find(c => c.goodsId === tempArray[i].goodsId && c.businessId === business.value.businessId);
                     if (cartItem) {
-                        tempArray[i].quantity = cartItem.quantity;
+                        tempArray[i].quantity = cartItem.quantity; // 如果购物车有，则更新为购物车数量
                     }
                 }
                 goods.value = tempArray;
@@ -142,20 +173,27 @@ const add = async (item) => {
         return;
     }
 
-    const goodsItemInCart = cart.value.find(cartItem => cartItem.goodsId === item.goodsId);
+    // 查找购物车中当前商家的该商品
+    let goodsItemInCart = cart.value.find(cartItem => cartItem.goodsId === item.goodsId && cartItem.businessId === business.value.businessId);
     const originalQuantity = goodsItemInCart ? goodsItemInCart.quantity : 0;
 
     // 乐观更新本地数量
     if (goodsItemInCart) {
         goodsItemInCart.quantity++;
     } else {
-        item.quantity = 1;
-        cart.value.push(item);
+        // 如果购物车中没有该商品，则创建一个新的购物车项并添加到购物车
+        goodsItemInCart = {
+            ...item, // 复制商品的所有属性
+            quantity: 1,
+            businessId: business.value.businessId // 添加 businessId
+        };
+        cart.value.push(goodsItemInCart);
     }
+    
     // 同步更新 goods 列表中的商品数量，确保 UI 反映最新状态
     const goodsItemInList = goods.value.find(g => g.goodsId === item.goodsId);
     if (goodsItemInList) {
-        goodsItemInList.quantity = goodsItemInCart ? goodsItemInCart.quantity : item.quantity;
+        goodsItemInList.quantity = goodsItemInCart.quantity; // 同步更新页面显示数量
     }
 
     let apiEndpoint = '';
@@ -163,7 +201,7 @@ const add = async (item) => {
         goodsId: item.goodsId,
         businessId: business.value.businessId,
         accountId: account.accountId,
-        quantity: goodsItemInCart ? goodsItemInCart.quantity : item.quantity,
+        quantity: goodsItemInCart.quantity,
     };
 
     if (originalQuantity === 0) {
@@ -180,14 +218,18 @@ const add = async (item) => {
         if (res.data && res.data.code === 20000) {
             ElMessage.success('商品已添加到购物车');
             sessionStorage.setItem('cart', JSON.stringify(cart.value));
-            sessionStorage.setItem('business', JSON.stringify(business.value));
+            sessionStorage.setItem('business', JSON.stringify(business.value)); // 确保 business 信息也同步
         } else {
             ElMessage.error(res.data ? res.data.message : '添加购物车失败');
             // 后端操作失败，回滚本地数量变化
-            if (goodsItemInCart) {
+            if (goodsItemInCart.quantity > 0) { // 避免负数
                 goodsItemInCart.quantity--;
             } else {
-                cart.value.pop();
+                // 如果是第一次添加失败，则从购物车中移除
+                const index = cart.value.indexOf(goodsItemInCart);
+                if (index > -1) {
+                    cart.value.splice(index, 1);
+                }
             }
             if (goodsItemInList) {
                 goodsItemInList.quantity = originalQuantity;
@@ -197,10 +239,13 @@ const add = async (item) => {
         console.error('添加购物车请求异常:', error);
         ElMessage.error('添加购物车异常');
         // 请求本身失败，回滚本地数量变化
-        if (goodsItemInCart) {
+        if (goodsItemInCart.quantity > 0) { // 避免负数
             goodsItemInCart.quantity--;
         } else {
-            cart.value.pop();
+            const index = cart.value.indexOf(goodsItemInCart);
+            if (index > -1) {
+                cart.value.splice(index, 1);
+            }
         }
         if (goodsItemInList) {
             goodsItemInList.quantity = originalQuantity;
@@ -216,7 +261,8 @@ const minus = async (item) => {
         return;
     }
 
-    const goodsItemInCart = cart.value.find(cartItem => cartItem.goodsId === item.goodsId);
+    // 查找购物车中当前商家的该商品
+    const goodsItemInCart = cart.value.find(cartItem => cartItem.goodsId === item.goodsId && cartItem.businessId === business.value.businessId);
 
     if (!goodsItemInCart || goodsItemInCart.quantity === 0) {
         return; // 如果购物车中没有该商品或数量已为0，则不执行任何操作
@@ -230,7 +276,7 @@ const minus = async (item) => {
     // 同步更新 goods 列表中的商品数量
     const goodsItemInList = goods.value.find(g => g.goodsId === item.goodsId);
     if (goodsItemInList) {
-        goodsItemInList.quantity = goodsItemInCart.quantity;
+        goodsItemInList.quantity = goodsItemInCart.quantity; // 同步更新页面显示数量
     }
 
     let apiEndpoint = '';
@@ -244,8 +290,6 @@ const minus = async (item) => {
     if (goodsItemInCart.quantity === 0) {
         // 数量变为0，调用 /cart/remove
         apiEndpoint = '/cart/remove';
-        // 对于 remove 接口，quantity 字段可能不需要，但为了统一传递，可以保留
-        // requestBody = { goodsId: item.goodsId, businessId: business.value.businessId, accountId: account.accountId };
     } else {
         // 数量大于0，更新数量，调用 /cart/update
         apiEndpoint = '/cart/update';
@@ -280,10 +324,72 @@ const minus = async (item) => {
     }
 };
 
-// 计算总数 (此函数未直接使用，但保留)
-const totalQuantity = computed(() => {
-    return cart.value.reduce((total, item) => total + item.quantity, 0);
+// 计算当前商家购物车中的商品列表
+const currentBusinessCartItems = computed(() => {
+    if (!business.value || !business.value.businessId) {
+        return [];
+    }
+    return cart.value.filter(item => item.businessId === business.value.businessId);
 });
+
+// 计算当前商家购物车中商品的总数量
+const totalQuantityForCurrentBusiness = computed(() => {
+    return currentBusinessCartItems.value.reduce((total, item) => total + item.quantity, 0);
+});
+
+// 计算当前商家购物车中商品的总金额
+const totalCartAmount = computed(() => {
+    return currentBusinessCartItems.value.reduce((total, item) => total + (item.goodsPrice * item.quantity), 0);
+});
+
+// 打开购物车弹窗
+const openCartPopup = () => {
+    showCartPopup.value = true;
+};
+
+// 关闭购物车弹窗
+const closeCartPopup = () => {
+    showCartPopup.value = false;
+};
+
+// 跳转到确认订单页面 (修改为与UserCart.vue结算逻辑一致)
+const goToConfirmOrder = () => {
+    if (totalQuantityForCurrentBusiness.value === 0) {
+        ElMessage.warning('购物车为空，请先添加商品！');
+        return;
+    }
+    if (!account || !account.accountId) {
+        ElMessage.error('请先登录');
+        router.push('/login');
+        return;
+    }
+
+    // 准备订单详情
+    const orderDetails = currentBusinessCartItems.value.map(item => ({
+        goodsId: item.goodsId,
+        goodsImg: item.goodsImg,
+        goodsName: item.goodsName,
+        goodsPrice: item.goodsPrice,
+        quantity: item.quantity
+    }));
+
+    // 准备商家信息
+    const businessInfo = {
+        businessId: business.value.businessId,
+        businessName: business.value.businessName,
+        businessAddress: business.value.businessAddress,
+        starPrice: business.value.starPrice,
+        deliveryPrice: business.value.deliveryPrice
+    };
+
+    // 保存到 sessionStorage
+    setSession('orderDetails', orderDetails);
+    setSession('businessInfo', businessInfo);
+
+    // 跳转到订单确认页面
+    router.push('/orderConfirm');
+    closeCartPopup(); // 跳转后关闭弹窗
+};
 
 // 跳转到评论页面
 const toComments = () => {
@@ -343,6 +449,164 @@ header {
 .AllComment i {
     margin-left: 5px;
     font-size: 14px;
+}
+
+/* 购物车按钮样式 */
+.cart-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #FFFACD; /* 淡黄色 */
+    color: white;
+    width: 50px; /* 圆形按钮宽度 */
+    height: 50px; /* 圆形按钮高度 */
+    border-radius: 50%; /* 使其成为圆形 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    /* font-size: 24px; 移除，因为现在是图片 */
+}
+
+.cart-button .cart-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ff4d4f; /* 红色提示 */
+    color: white;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+    line-height: 1;
+}
+
+.cart-button .cart-icon { /* 新增图片样式 */
+    width: 30px; /* 调整图片大小 */
+    height: 30px;
+    object-fit: contain;
+}
+
+/* 购物车弹窗覆盖层 */
+.cart-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* 购物车弹窗内容 */
+.cart-popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh; /* 限制最大高度 */
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    position: relative;
+}
+
+.cart-popup-content h3 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 20px;
+}
+
+.cart-items-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1; /* 允许列表内容区域增长 */
+    overflow-y: auto; /* 列表内容溢出时显示滚动条 */
+    margin-bottom: 15px;
+}
+
+.cart-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #eee;
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+}
+
+.cart-item img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.cart-item .item-details {
+    flex-grow: 1;
+}
+
+.cart-item .item-name {
+    font-size: 16px;
+    color: #333;
+    margin: 0 0 5px;
+}
+
+.cart-item .item-price {
+    font-size: 14px;
+    color: #ff5722;
+    font-weight: bold;
+    margin: 0;
+}
+
+.cart-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    margin-top: auto; /* 将总结部分推到底部 */
+}
+
+.cart-summary p {
+    font-size: 18px;
+    color: #333;
+    font-weight: bold;
+    margin: 0;
+}
+
+.cart-summary button {
+    background-color: #409EFF;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.close-popup-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px; /* 调整图标大小 */
+    color: #999;
+    cursor: pointer;
+    outline: none;
 }
 
 .business-logo img {

@@ -77,13 +77,15 @@ const toShowUserOrders = () => {
   // 跳转到用户订单页面
 };
 
-const toShowUserBusinesses = () =>{
-  //跳转到关注店铺界面
+
+
+
+const toShowUserAddresses = () => {
+  // console.log("111")
+  // 跳转到地址管理页
+  router.push('/address');
 };
 
-const toShowUserAddresses = () =>{
-  //跳转到用户地址界面
-};
 
 const toChangeAccount = () => {
   //跳转到修改信息的界面
@@ -111,12 +113,6 @@ const toCancelAccount = () => {
   sessionStorage.removeItem('account');
   location.reload()
   });
-};
-
-const toLogoutAccount = () => {
-  //退出当前账号
-  sessionStorage.removeItem('account');
-  location.reload()
 };
 
 
@@ -151,6 +147,20 @@ const verifyPassword = (callback) => {
   .catch(() => {
     ElMessage.info('取消验证');
   });
+};
+
+const toShowUserBusinesses = () => {
+  // 跳转到店铺关注页面
+  router.push('/userFavorites');
+};
+
+
+
+const toLogoutAccount = () => {
+  // 退出账号
+  sessionStorage.removeItem('account');
+  ElMessage.success('退出成功');
+  isLogin.value = false;
 };
 
 </script>

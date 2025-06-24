@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDateTime;
 
 /**
  * 评论控制器
@@ -41,5 +42,26 @@ public class CommentController extends BaseController {
     public Result listByAccountId(@PathVariable String accountId) {
         List<Map<String, Object>> comments = commentService.getCommentListWithBusiness(accountId);
         return Result.success(comments);
+    }
+
+    /**
+     * 添加评论
+     * @param comment 评论信息
+     * @return 添加结果
+     */
+    @PostMapping("/add")
+    public Result add(@RequestBody Comment comment) {
+        // 设置评论状态为有效
+        comment.setStatu(1);
+        // 设置创建时间和更新时间
+        comment.setCreated(LocalDateTime.now());
+        comment.setUpdated(LocalDateTime.now());
+
+        boolean success = commentService.save(comment);
+        if (success) {
+            return Result.success(null);
+        } else {
+            return Result.fail("添加评论失败");
+        }
     }
 }
