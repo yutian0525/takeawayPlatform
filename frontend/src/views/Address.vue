@@ -8,7 +8,7 @@
         <ul class="addresslist">
             <template v-if="addressList.length > 0">
                 <li v-for="(address, index) in addressList" :key="address.id" @click="selectAddress(address)">
-                    <div class="address-item" @click="selectAddress(address)">
+                    <div class="address-item">
                         <div class="user-info">
                             <span class="avatar">{{ address.contactName.charAt(0) }}</span>
                             <span class="name">{{ address.contactName }}</span>
