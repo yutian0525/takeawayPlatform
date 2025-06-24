@@ -20,16 +20,16 @@
                 <div class="business-info">
                     <i class="fa fa-shopping-cart"></i>
                     <span class="business-name">{{ order.businessName }}</span>
-                  
-                    <span class="order-status">{{ order.state === 1 ? '已支付' : '待支付' }}</span>
+                  <span class="order-status">
+                    {{ order.state === 0 ? '待支付' : (hasComment(order.orderId) ? '已完成' : '已支付') }}
+                  </span>
                 </div>
                 <div class="order-details">
                     <div class="amount">交易金额: {{ order.amount }}元</div>
                     <div class="date">交易日期: {{ formatDateTime(order.created) }} </div>
                 </div>
                 <div class="order-actions">
-                   
-                    <button class="review-btn" @click.stop="goToReview(order.orderId)" v-if="order.state === 1">去评价 ></button> <!-- .stop 阻止事件冒泡 -->
+                    <button class="review-btn" @click.stop="goToReview(order.orderId)" v-if="order.state === 1 && !hasComment(order.orderId)">去评价 ></button> <!-- 只有已支付且未评价的订单才显示去评价按钮 -->
                 </div>
             </div>
         </div>
@@ -48,7 +48,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const router = useRouter()
 const searchText = ref('')
 const orders = ref([])
-const currentTab = ref('all') 
+const currentTab = ref('all')
+const userComments = ref([]) // 存储用户的评论列表
 
 const formatDateTime = (dateTimeString) => {
     if (!dateTimeString) return '';
@@ -108,6 +109,8 @@ const loadOrders = async () => {
         const response = await get(`/orders/${account.accountId}`)
         if (response.data.code === 20000) {
             orders.value = response.data.resultdata
+            // 加载订单后，加载用户评论列表
+            await loadUserComments(account.accountId)
         } else {
             ElMessage.error('获取订单列表失败')
         }
@@ -115,6 +118,26 @@ const loadOrders = async () => {
         console.error('加载订单列表失败:', error)
         ElMessage.error('加载订单列表失败')
     }
+}
+
+// 获取用户评论列表
+const loadUserComments = async (accountId) => {
+    try {
+        const response = await get(`/comment/list/user/${accountId}`)
+        if (response.data.code === 20000) {
+            userComments.value = response.data.resultdata || []
+            console.log('用户评论列表:', userComments.value)
+        } else {
+            console.error('获取用户评论列表失败')
+        }
+    } catch (error) {
+        console.error('加载用户评论列表失败:', error)
+    }
+}
+
+// 检查订单是否已评价
+const hasComment = (orderId) => {
+    return userComments.value.some(comment => comment.order_id === orderId)
 }
 
 // 删除订单
