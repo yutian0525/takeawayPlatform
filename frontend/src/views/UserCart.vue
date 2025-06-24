@@ -66,11 +66,7 @@
 
     const router = useRouter();
     const cartList = ref([]);
-    
-    // 从 sessionStorage 获取用户信息
     const account = ref(getSession('account'));
-
-    // 加载购物车数据
     const loadCartData = async () => {
         if (!account.value) {
             ElMessage.error('请先登录');
@@ -79,16 +75,13 @@
         }
 
         try {
-            // 1. 获取所有购物车商品
+            
             const cartRes = await get(`/cart/listCartByAccountId/${account.value.accountId}`);
             if (cartRes.data.code !== 20000) {
                 ElMessage.error('加载购物车数据失败');
                 return;
             }
             let cartArray = cartRes.data.resultdata;
-
-            // 2. 为每个购物车商品获取其对应的商品详情
-            // 使用 Promise.all 并行请求所有商品的详细信息
             const goodsPromises = cartArray.map(async (cartItem) => {
                 // 假设后端有一个 /goods/info/{goodsId} 接口来获取商品详情
                 const goodsInfoRes = await get(`/goods/info/${cartItem.goodsId}`);
@@ -96,7 +89,7 @@
                     cartItem.goods = goodsInfoRes.data.resultdata; // 将完整的商品对象附加到 cartItem 上
                 } else {
                     console.warn(`加载商品ID ${cartItem.goodsId} 信息失败:`, goodsInfoRes.data.message);
-                    cartItem.goods = null; // 如果获取失败，将 goods 设为 null
+                    cartItem.goods = null; 
                 }
                 return cartItem;
             });
@@ -105,8 +98,6 @@
 
             // 过滤掉那些没有成功加载商品详情的购物车项，避免后续报错
             cartArray = cartArray.filter(item => item.goods !== null);
-
-            // 3. 按商家ID分组商品，并收集唯一的商家ID
             const groupedCartMap = new Map();
             const businessIdsToFetch = new Set();
 
@@ -144,9 +135,8 @@
                 }
             });
             await Promise.all(businessPromises);
-
-            // 5. 更新 cartList
             cartList.value = Array.from(groupedCartMap.values());
+            setSession('cartList', cartList.value);
 
         } catch (error) {
             console.error('加载购物车数据时发生错误:', error);
@@ -167,6 +157,7 @@
                     item.selected = value;
                 });
             });
+            setSession('cartList', cartList.value);
         }
     });
 
@@ -175,11 +166,13 @@
         business.items.forEach(item => {
             item.selected = business.selected;
         });
+        setSession('cartList', cartList.value);
     };
 
     // 切换商品选中状态
     const toggleItemSelection = (business, item) => {
         business.selected = business.items.every(i => i.selected);
+        setSession('cartList', cartList.value);
     };
 
     // 更新商品数量 (与后端交互)
@@ -207,6 +200,7 @@
                     if (business.items.length === 0) {
                         cartList.value = cartList.value.filter(b => b.businessId !== business.businessId);
                     }
+                    setSession('cartList', cartList.value);
                 } else {
                     ElMessage.error('移除商品失败');
                 }
@@ -225,6 +219,7 @@
                 }, true);
                 if (res.data.code === 20000) {
                     item.quantity = newQuantity; // 更新本地数量
+                    setSession('cartList', cartList.value);
                 } else {
                     ElMessage.error('更新商品数量失败');
                 }
@@ -258,11 +253,13 @@
     // 计算单个商家的总价
     const calculateBusinessTotal = (business) => {
         let total = 0;
-        business.items.forEach(item => {
-            if (item.selected) {
-                total += item.goods.goodsPrice * item.quantity;
-            }
-        });
+        if (business && business.items) {
+            business.items.forEach(item => {
+                if (item.selected) {
+                    total += item.goods.goodsPrice * item.quantity;
+                }
+            });
+        }
         return total.toFixed(2);
     };
 
@@ -307,6 +304,7 @@
             try {
                 await Promise.all(removePromises); // 等待所有删除请求完成
                 cartList.value = []; // 清空本地数据
+                setSession('cartList', cartList.value);
                 ElMessage.success('购物车已清空');
             } catch (error) {
                 console.error('清空购物车失败:', error);
@@ -349,13 +347,7 @@
 
         try {
             // 准备订单数据
-            const orderDetails = selectedItems.map(item => ({
-                goodsId: item.goods.goodsId,
-                goodsImg: item.goods.goodsImg,
-                goodsName: item.goods.goodsName,
-                goodsPrice: item.goods.goodsPrice,
-                quantity: item.quantity
-            }));
+            const orderDetails = selectedItems.map(item => item);
 
             const businessInfo = {
                 businessId: selectedBusiness.businessId,
@@ -368,6 +360,7 @@
             // 保存到 sessionStorage
             setSession('orderDetails', orderDetails);
             setSession('businessInfo', businessInfo);
+            setSession('cartList', cartList.value);
 
             console.log('保存的订单数据:', orderDetails); // 调试用
             console.log('保存的商家信息:', businessInfo); // 调试用
@@ -380,14 +373,7 @@
         }
     };
 
-    // 在组件挂载时从 sessionStorage 恢复数据
-    onMounted(() => {
-        const savedCartList = getSession('cartList');
-        if (savedCartList) {
-            cartList.value = savedCartList;
-        }
-        loadCartData();
-    });
+
 </script>
 
    

@@ -72,10 +72,10 @@
             <h3>购物车</h3>
             <ul class="cart-items-list">
                 <li v-for="item in currentBusinessCartItems" :key="item.goodsId" class="cart-item">
-                    <img :src="item.goodsImg" alt="Goods Image">
+                    <img :src="item.goods.goodsImg" alt="Goods Image">
                     <div class="item-details">
-                        <p class="item-name">{{ item.goodsName }} x {{ item.quantity }}</p>
-                        <p class="item-price">&#165;{{ (item.goodsPrice * item.quantity).toFixed(2) }}</p>
+                        <p class="item-name">{{ item.goods.goodsName }} x {{ item.quantity }}</p>
+                        <p class="item-price">&#165;{{ (item.goods.goodsPrice * item.quantity).toFixed(2) }}</p>
                     </div>
                 </li>
             </ul>
@@ -109,7 +109,7 @@ const account = JSON.parse(sessionStorage.getItem("account"));
 
 // 页面显示商品列表对象
 const goods = ref([]);
-const cart = ref(JSON.parse(sessionStorage.getItem('cart')) || []);
+const cartList = ref(JSON.parse(sessionStorage.getItem('cartList')) || []);
 
 // 购物车弹窗显示状态
 const showCartPopup = ref(false);
@@ -138,13 +138,21 @@ function loadGoodsByBusinessId() {
         if (res.data && res.data.code === 20000) {
             let tempArray = res.data.resultdata;
             if (Array.isArray(tempArray)) {
+                // 从 sessionStorage 中获取 cartList 数据
+                const cartList = JSON.parse(sessionStorage.getItem('cartList')) || [];
+                // 找到当前商家的购物车项
+                const currentBusinessCart = cartList.find(b => b.businessId === business.value.businessId);
+
                 for (let i = 0; i < tempArray.length; i++) {
-                    tempArray[i].quantity = 0; // 默认初始化为0
-                    // 从购物车中查找当前商家的该商品数量，确保 cartItem 包含 businessId
-                    const cartItem = cart.value.find(c => c.goodsId === tempArray[i].goodsId && c.businessId === business.value.businessId);
-                    if (cartItem) {
-                        tempArray[i].quantity = cartItem.quantity; // 如果购物车有，则更新为购物车数量
+                    tempArray[i].goodsPrice = parseFloat(tempArray[i].goodsPrice);
+                    let quantity = 0;
+                    if (currentBusinessCart) {
+                        // 从当前商家的购物车项中查找该商品
+                        const cartItem = currentBusinessCart.items && currentBusinessCart.items.find(c => c.goods.goodsId === tempArray[i].goodsId);
+                        // 如果购物车有，则更新为购物车数量，否则为0
+                        quantity = cartItem ? cartItem.quantity : 0;
                     }
+                    tempArray[i].quantity = quantity;
                 }
                 goods.value = tempArray;
             } else {
@@ -171,23 +179,32 @@ const add = async (item) => {
         return;
     }
 
-    // 查找购物车中当前商家的该商品
-    let goodsItemInCart = cart.value.find(cartItem => cartItem.goodsId === item.goodsId && cartItem.businessId === business.value.businessId);
+    // 查找或创建当前商家的购物车对象
+    let currentBusinessCart = cartList.value.find(b => b.businessId === business.value.businessId);
+    if (!currentBusinessCart) {
+        currentBusinessCart = {
+            businessId: business.value.businessId,
+            items: []
+        };
+        cartList.value.push(currentBusinessCart);
+    }
+
+    // 在当前商家的购物车中查找商品
+    let goodsItemInCart = currentBusinessCart.items.find(cartItem => cartItem.goods.goodsId === item.goodsId);
     const originalQuantity = goodsItemInCart ? goodsItemInCart.quantity : 0;
 
     // 乐观更新本地数量
     if (goodsItemInCart) {
         goodsItemInCart.quantity++;
     } else {
-        // 如果购物车中没有该商品，则创建一个新的购物车项并添加到购物车
+        // 如果购物车中没有该商品，则创建一个新的商品项并添加到当前商家的购物车中
         goodsItemInCart = {
-            ...item, // 复制商品的所有属性
-            quantity: 1,
-            businessId: business.value.businessId // 添加 businessId
+            goods: { ...item, goodsPrice: parseFloat(item.goodsPrice) }, // 确保 goodsPrice 是数字，并保留完整的 goods 对象
+            quantity: 1
         };
-        cart.value.push(goodsItemInCart);
+        currentBusinessCart.items.push(goodsItemInCart);
     }
-    
+
     // 同步更新 goods 列表中的商品数量，确保 UI 反映最新状态
     const goodsItemInList = goods.value.find(g => g.goodsId === item.goodsId);
     if (goodsItemInList) {
@@ -215,8 +232,8 @@ const add = async (item) => {
 
         if (res.data && res.data.code === 20000) {
             ElMessage.success('商品已添加到购物车');
-            sessionStorage.setItem('cart', JSON.stringify(cart.value));
-            sessionStorage.setItem('business', JSON.stringify(business.value)); // 确保 business 信息也同步
+            // 确保 cartList.value 已经包含了最新的数据，然后同步到 sessionStorage
+            sessionStorage.setItem('cartList', JSON.stringify(cartList.value));
         } else {
             ElMessage.error(res.data ? res.data.message : '添加购物车失败');
             // 后端操作失败，回滚本地数量变化
@@ -224,9 +241,16 @@ const add = async (item) => {
                 goodsItemInCart.quantity--;
             } else {
                 // 如果是第一次添加失败，则从购物车中移除
-                const index = cart.value.indexOf(goodsItemInCart);
+                const index = cartList.value.indexOf(goodsItemInCart);
                 if (index > -1) {
-                    cart.value.splice(index, 1);
+                    currentBusinessCart.items.splice(index, 1);
+                }
+                // 如果当前商家购物车为空，则从 cartList 中移除该商家购物车
+                if (currentBusinessCart.items.length === 0) {
+                    const businessCartIndex = cartList.value.indexOf(currentBusinessCart);
+                    if (businessCartIndex > -1) {
+                        cartList.value.splice(businessCartIndex, 1);
+                    }
                 }
             }
             if (goodsItemInList) {
@@ -240,9 +264,16 @@ const add = async (item) => {
         if (goodsItemInCart.quantity > 0) { // 避免负数
             goodsItemInCart.quantity--;
         } else {
-            const index = cart.value.indexOf(goodsItemInCart);
+            const index = cartList.value.indexOf(goodsItemInCart);
             if (index > -1) {
-                cart.value.splice(index, 1);
+                currentBusinessCart.items.splice(index, 1);
+            }
+            // 如果当前商家购物车为空，则从 cartList 中移除该商家购物车
+            if (currentBusinessCart.items.length === 0) {
+                const businessCartIndex = cartList.value.indexOf(currentBusinessCart);
+                if (businessCartIndex > -1) {
+                    cartList.value.splice(businessCartIndex, 1);
+                }
             }
         }
         if (goodsItemInList) {
@@ -259,8 +290,15 @@ const minus = async (item) => {
         return;
     }
 
-    // 查找购物车中当前商家的该商品
-    const goodsItemInCart = cart.value.find(cartItem => cartItem.goodsId === item.goodsId && cartItem.businessId === business.value.businessId);
+    // 查找当前商家的购物车对象
+    let currentBusinessCart = cartList.value.find(b => b.businessId === business.value.businessId);
+
+    if (!currentBusinessCart || !currentBusinessCart.items) {
+        return; // 如果没有当前商家的购物车或购物车为空，则不执行任何操作
+    }
+
+    // 在当前商家的购物车中查找商品
+    let goodsItemInCart = currentBusinessCart.items.find(cartItem => cartItem.goods.goodsId === item.goodsId);
 
     if (!goodsItemInCart || goodsItemInCart.quantity === 0) {
         return; // 如果购物车中没有该商品或数量已为0，则不执行任何操作
@@ -299,10 +337,21 @@ const minus = async (item) => {
         if (res.data && res.data.code === 20000) {
             ElMessage.success('商品数量已更新');
             if (goodsItemInCart.quantity === 0) {
-                const index = cart.value.indexOf(goodsItemInCart);
-                cart.value.splice(index, 1); // 如果数量为0，从本地购物车中移除
+                // 如果数量为0，从当前商家的购物车中移除该商品
+                const index = currentBusinessCart.items.indexOf(goodsItemInCart);
+                if (index > -1) {
+                    currentBusinessCart.items.splice(index, 1);
+                }
+                // 如果当前商家购物车为空，则从 cartList 中移除该商家购物车
+                if (currentBusinessCart.items.length === 0) {
+                    const businessCartIndex = cartList.value.indexOf(currentBusinessCart);
+                    if (businessCartIndex > -1) {
+                        cartList.value.splice(businessCartIndex, 1);
+                    }
+                }
             }
-            sessionStorage.setItem('cart', JSON.stringify(cart.value));
+            // 确保 cartList.value 已经包含了最新的数据，然后同步到 sessionStorage
+            sessionStorage.setItem('cartList', JSON.stringify(cartList.value));
         } else {
             ElMessage.error(res.data ? res.data.message : '更新购物车失败');
             // 后端操作失败，回滚本地数量变化
@@ -327,17 +376,21 @@ const currentBusinessCartItems = computed(() => {
     if (!business.value || !business.value.businessId) {
         return [];
     }
-    return cart.value.filter(item => item.businessId === business.value.businessId);
+    // 找到当前商家的购物车项，直接使用响应式变量 cartList.value
+    const currentBusinessCart = cartList.value.find(b => b.businessId === business.value.businessId);
+    return currentBusinessCart && currentBusinessCart.items ? currentBusinessCart.items : [];
 });
 
 // 计算当前商家购物车中商品的总数量
 const totalQuantityForCurrentBusiness = computed(() => {
-    return currentBusinessCartItems.value.reduce((total, item) => total + item.quantity, 0);
+    return currentBusinessCartItems.value && currentBusinessCartItems.value.length > 0
+        ? currentBusinessCartItems.value.reduce((total, item) => total + item.quantity, 0)
+        : 0;
 });
 
 // 计算当前商家购物车中商品的总金额
 const totalCartAmount = computed(() => {
-    return currentBusinessCartItems.value.reduce((total, item) => total + (item.goodsPrice * item.quantity), 0);
+    return currentBusinessCartItems.value.reduce((total, item) => total + (item.goods.goodsPrice * item.quantity), 0);
 });
 
 // 打开购物车弹窗
@@ -362,14 +415,8 @@ const goToConfirmOrder = () => {
         return;
     }
 
-    // 准备订单详情
-    const orderDetails = currentBusinessCartItems.value.map(item => ({
-        goodsId: item.goodsId,
-        goodsImg: item.goodsImg,
-        goodsName: item.goodsName,
-        goodsPrice: item.goodsPrice,
-        quantity: item.quantity
-    }));
+    // 准备订单详情，直接使用完整的 item 对象，其中包含了 goods 对象
+    const orderDetails = currentBusinessCartItems.value.map(item => item);
 
     // 准备商家信息
     const businessInfo = {
@@ -383,6 +430,7 @@ const goToConfirmOrder = () => {
     // 保存到 sessionStorage
     setSession('orderDetails', orderDetails);
     setSession('businessInfo', businessInfo);
+    setSession('cartList', cartList.value); // 确保将所有商家的购物车数据保存到 cartList
 
     // 跳转到订单确认页面
     router.push('/orderConfirm');

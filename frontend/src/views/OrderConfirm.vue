@@ -25,10 +25,10 @@
     <ul class="order-detailed">
       <li v-for="item in cart" :key="item.goodsId">
         <div class="order-detailed-left">
-          <img :src="item.goodsImg">
-          <p>{{ item.goodsName }} x {{ item.quantity }}</p>
+          <img :src="item.goods.goodsImg">
+          <p>{{ item.goods.goodsName }} x {{ item.quantity }}</p>
         </div>
-        <p>&#165; {{ item.goodsPrice * item.quantity }}</p>
+        <p>&#165; {{ item.goods.goodsPrice * item.quantity }}</p>
       </li>
     </ul>
     <div class="order-deliveryfee">
@@ -65,7 +65,7 @@ const cart = ref([]);
 const totalPrice = computed(() => {
     let total = 0;
     for (const item of cart.value) {
-        total += item.goodsPrice * item.quantity;
+        total += item.goods.goodsPrice * item.quantity;
     }
     if (business.value && business.value.deliveryPrice) {
         total += business.value.deliveryPrice;
@@ -85,11 +85,11 @@ const toPayment = async () => {
         const orderData = {
             accountId: account.value.accountId,
             businessId: business.value.businessId,
-            // orderTotal: totalPrice.value, // REMOVED: 后端将根据明细计算总金额
-            daId: deliveryAddress.value.daId, // 注意：这里假设地址对象的ID字段是daId
-            state: 0, // 订单状态，0表示未支付
+            // orderTotal: totalPrice.value 
+            daId: deliveryAddress.value.daId, 
+            state: 0, 
             orderdetails: cart.value.map(item => ({
-                goodsId: item.goodsId,
+                goodsId: item.goods.goodsId, // 确保从嵌套的 goods 对象中获取 goodsId
                 quantity: item.quantity
             }))
         };
