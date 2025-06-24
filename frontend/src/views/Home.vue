@@ -154,7 +154,7 @@ const checkFavoriteStatus = (businessId) => {
         accountId: account.accountId,
         businessId: businessId
     }).then(res => {
-        console.log('检查收藏状态响应:', res.data);
+        // console.log('检查收藏状态响应:', res.data);
         // 兼容两种返回格式
         const isSuccess = res.data.code === 200 || res.data.code === 20000;
         const isFavorite = res.data.data === true || res.data.resultdata === true;
