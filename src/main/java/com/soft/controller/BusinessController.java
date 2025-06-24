@@ -64,6 +64,9 @@ public class BusinessController extends BaseController {
         }
     }
 
-
+    @GetMapping("/search/{searchQuery}")
+    public Result Search(@PathVariable String searchQuery){
+        return Result.success(bService.list(new QueryWrapper<Business>().like("business_name",searchQuery)));
+    }
 
 }
