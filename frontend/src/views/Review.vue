@@ -36,6 +36,30 @@
                 ></el-input>
             </div>
 
+            <div class="upload-section">
+                <div class="upload-title">添加图片</div>
+                <div class="image-upload">
+                    <input 
+                        type="file" 
+                        ref="fileInput" 
+                        accept="image/jpeg,image/png,image/jpg" 
+                        @change="handleFileChange" 
+                        style="display: none"
+                    >
+                    <div v-if="!imagePreview" class="upload-box" @click="triggerFileInput">
+                        <i class="el-icon-plus"></i>
+                        <p>点击上传图片</p>
+                    </div>
+                    <div v-else class="preview-container">
+                        <img :src="imagePreview" class="preview-image">
+                        <div class="preview-actions">
+                            <button @click="removeImage" class="remove-btn">删除</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="upload-tip">只能上传jpg/png文件，且不超过2MB</div>
+            </div>
+
             <div class="submit-section">
                 <el-button type="primary" @click="submitReview" :loading="submitting">发布评价</el-button>
             </div>
@@ -69,6 +93,8 @@ const order = ref(null)
 const rating = ref(5)
 const comment = ref('')
 const submitting = ref(false)
+const imagePreview = ref('')
+const imageBase64 = ref('')
 
 // 用户登录信息
 const account = JSON.parse(sessionStorage.getItem('account'))
@@ -104,6 +130,47 @@ const loadOrder = async () => {
     }
 }
 
+// 触发文件选择
+const triggerFileInput = () => {
+    document.querySelector('input[type="file"]').click()
+}
+
+// 处理文件选择
+const handleFileChange = (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+    
+    // 验证文件类型和大小
+    const isJPGOrPNG = ['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)
+    const isLt2M = file.size / 1024 / 1024 < 2
+
+    if (!isJPGOrPNG) {
+        ElMessage.error('只能上传JPG或PNG格式的图片！')
+        return
+    }
+    if (!isLt2M) {
+        ElMessage.error('图片大小不能超过2MB！')
+        return
+    }
+    
+    // 读取文件并转换为base64
+    const reader = new FileReader()
+    reader.onload = (e) => {
+        imagePreview.value = e.target.result
+        imageBase64.value = e.target.result
+    }
+    reader.readAsDataURL(file)
+}
+
+// 移除已选择的图片
+const removeImage = () => {
+    imagePreview.value = ''
+    imageBase64.value = ''
+    // 重置文件输入框
+    const fileInput = document.querySelector('input[type="file"]')
+    if (fileInput) fileInput.value = ''
+}
+
 // 提交评价
 const submitReview = async () => {
     if (!account) {
@@ -132,7 +199,8 @@ const submitReview = async () => {
             businessId: businessId,
             orderId: orderId,
             rate: rating.value,
-            coText: comment.value
+            coText: comment.value,
+            coImg: imageBase64.value // 添加图片base64数据
         }
         
         console.log('提交评价数据:', reviewData)
@@ -244,7 +312,8 @@ header p {
 }
 
 .rating-section,
-.comment-section {
+.comment-section,
+.upload-section {
     background: #fff;
     border-radius: 2vw;
     padding: 4vw;
@@ -275,5 +344,85 @@ header p {
     height: 50vh;
     font-size: 4vw;
     color: #666;
+}
+
+.upload-title {
+    font-size: 4vw;
+    color: #333;
+    margin-bottom: 3vw;
+}
+
+.image-upload {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.upload-box {
+    width: 25vw;
+    height: 25vw;
+    border: 1px dashed #d9d9d9;
+    border-radius: 2vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.upload-box:hover {
+    border-color: #409EFF;
+}
+
+.upload-box i {
+    font-size: 6vw;
+    color: #8c939d;
+    margin-bottom: 2vw;
+}
+
+.upload-box p {
+    font-size: 3vw;
+    color: #8c939d;
+    margin: 0;
+}
+
+.preview-container {
+    position: relative;
+    margin-right: 3vw;
+    margin-bottom: 3vw;
+}
+
+.preview-image {
+    width: 25vw;
+    height: 25vw;
+    object-fit: cover;
+    border-radius: 2vw;
+}
+
+.preview-actions {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    padding: 1vw 0;
+    border-bottom-left-radius: 2vw;
+    border-bottom-right-radius: 2vw;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 3vw;
+    cursor: pointer;
+}
+
+.upload-tip {
+    font-size: 3vw;
+    color: #8c939d;
+    margin-top: 2vw;
 }
 </style>
