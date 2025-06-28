@@ -3,7 +3,7 @@ import qs from "qs"
 
 //创建axios对象，做一些基础设置
 const axiosInstance =  axios.create({
-    baseURL:'http://aaa.yutiantian.top', // 请根据您的实际后端地址修改
+    baseURL:'https://aaa.yutiantian.top', // 请根据您的实际后端地址修改
     timeout:50000
 });
 
